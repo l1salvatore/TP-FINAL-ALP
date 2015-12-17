@@ -1,17 +1,24 @@
 module DepTree where
 
-
 import Common
-import Eval
-import Data.Tree
+import Data.List 
+data Tree = Nil | Node Celda [Tree]
+				deriving(Show,Eq)
+
+insertar :: Celda -> Celda -> Tree -> Tree
+insertar c _ Nil = Nil
+insertar c p (Node r t) = if r == p then Node p ((Node c []):t) else Node p (map (\tr -> insertar c p tr) t)
 
 
+obtenerNodos :: Tree -> [Celda]
+obtenerNodos Nil = []
+obtenerNodos (Node r t) = r : nub (concat (map (\tr -> obtenerNodos tr) t))
 
-
-createTree :: Celda {- padre -} -> [Celda] {- Hijos -} -> Tree Celda
-createTree x xs = unfoldTree (\c -> (c,xs))  x
-
-
+{-
+obtenerHijos :: Celda -> Tree -> [Celda]
+obtenerHijos c Nil = []
+obtenerHijos c (Node r t) = if c == r 
+-}
 
 {-
 insert :: Celda {- a insertar -} -> Maybe Celda {- el padre -} -> Bool -> DTree -> DTree
