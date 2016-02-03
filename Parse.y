@@ -141,7 +141,6 @@ lexNum cs = if rest /= [] && rest!!0 == '.' then TokenFloat (read (num ++ num1) 
       where (num,rest) = span isDigit cs
 	    (num1,rest') = span isDigit (tail rest)
 
--- 23.42
 
 lexFunc cs =
    case span isAlpha cs of

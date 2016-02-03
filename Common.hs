@@ -4,6 +4,8 @@ module Common where
 
 data Error = Ok | Err String
 	deriving (Show,Eq)
+	
+data Typ = Numeric | Stringg
 
 type Valor = (Float,String,Error)
 
