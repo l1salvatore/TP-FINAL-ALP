@@ -3,9 +3,10 @@ module Main where
 
 import Common
 import Eval
+import DepTree
 import Parse
 import System.Console.Readline
-import Graphics.UI.Gtk
+--import Graphics.UI.Gtk
 {-
 
 v2str :: V -> String
@@ -65,37 +66,46 @@ interprete ent = (readline "> ") >>= (\x -> case x of
 				     Right a  -> let e = eval' a ent in
 						(putStr ("-------------------\n")) >>= (\_ -> printEnt e) >>= (\_ -> putStr  ("-------------------\n")) >>= (\_ -> interprete e)) -}
 
-pp :: Entorno -> IO()
-pp [] = return ()
-pp ((c,e):xs) = do putStr "celda: "
-                   print c
-                   putStr "expresion: "
-                   print e
-                   putStrLn "-------------------"
-                   pp xs
-                   
 
-interprete :: Entorno -> IO ()
-interprete env = do x <- readline "Celda> "
-                    case x of
-                        Nothing -> return ()
-                        Just "_exit" -> return ()
-                        Just str -> case (parseExpr ([TokenEval] ++ lexCelda str)) of
-                               (Eval (Var c)) -> do putStrLn ""
-                                                    y <- readline "Expresion> "
-                                                    case y of
-                                                        Nothing -> return ()
-                                                        Just "_exit" -> return ()
-                                                        Just str1 -> let e = parseExpr (lexer str1) in
-                                                                        do putStr "VALOR RECIENTE: "
-                                                                           print (eval e env)
-                                                                           putStrLn "-------------------" 
-                                                                           let env' = update' c e env in
-                                                                                do pp env'
-                                                                                   interprete env'
-                               _              -> error("sintax error") >>= (\_ -> interprete env)
+
+pp :: Graph -> IO ()
+pp g = do putStrLn "-------------------"
+	  app g (\(a,b) -> pp' a)
+
+pp' :: InfoCelda -> IO()
+pp'  i     = do putStr "celda: "
+                putStr (fst (celda i))
+		print (snd (celda i))
+                putStr "string: "
+                print (strexpr i)
+		putStr "valor: "
+		print (valor i)
+                putStrLn "-------------------"
+   
+
+
+
+interprete :: Graph -> IO ()
+interprete gra     = do x <- readline "Celda> "
+                        case x of
+		                Nothing -> return ()
+		                Just "_exit" -> return ()
+		                Just str -> case (parseExpr ([TokenEval] ++ lexCelda str)) of
+		                       (Eval (Var c)) -> do putStrLn ""
+		                                            y <- readline "Expresion> "
+		                                            case y of
+		                                                Nothing -> return ()
+		                                                Just "_exit" -> return ()
+		                                                Just str1 -> let e = parseExpr (lexer str1) in
+		                                                                do v <- evalExpr c e gra 
+										   updateCell c e str1 v gra
+										   gra <- bfs c gra eval
+										   pp gra 
+		                                                                   interprete gra
+		                       _              -> error("sintax error") >>= (\_ -> interprete gra)
 main :: IO ()                                           
-main = interprete []
+main = do g <- newGraph
+	  interprete g 
                                                      
                         
                         

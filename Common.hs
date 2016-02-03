@@ -2,21 +2,27 @@
 module Common where
 
 
+data Error = Ok | Err String
+	deriving (Show,Eq)
+
+type Valor = (Float,String,Error)
+
 type Celda = (String, Int)
 
 natural :: Int -> Bool
 natural x = x >= 0
-
+{-
 
 data Type = TString
 	 |  TFloat
 	 |  TUnit
 	deriving(Show,Eq)
-
+-}
 
 data Exp = Str String
 	 | Fl Float
 	 | Eval ExpEval
+	 | Unit ()
        deriving(Show,Eq)
 
 data ExpEval  = Var Celda

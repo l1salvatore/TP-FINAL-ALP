@@ -1,61 +1,163 @@
 module DepTree where
 
+import Data.Char
+import qualified Data.Set as S
+
+import qualified Data.List as L
+
+import qualified HashTables as HT
+
 import Common
-import Data.List 
-data Tree = Nil | Node Celda [Tree]
-				deriving(Show,Eq)
-
-insertar :: Celda -> Celda -> Tree -> Tree
-insertar c _ Nil = Nil
-insertar c p (Node r t) = if r == p then Node p ((Node c []):t) else Node p (map (\tr -> insertar c p tr) t)
 
 
-obtenerNodos :: Tree -> [Celda]
-obtenerNodos Nil = []
-obtenerNodos (Node r t) = r : nub (concat (map (\tr -> obtenerNodos tr) t))
+data InfoCelda = IC {celda :: Celda,
+		     expr :: Exp,
+		     strexpr :: String,
+		     valor :: Valor}
+		deriving (Show,Eq)
 
-{-
-obtenerHijos :: Celda -> Tree -> [Celda]
-obtenerHijos c Nil = []
-obtenerHijos c (Node r t) = if c == r 
--}
+instance Ord InfoCelda where
+	compare x y = compare (celda x) (celda y)
 
-{-
-insert :: Celda {- a insertar -} -> Maybe Celda {- el padre -} -> Bool -> DTree -> DTree
-insert c _ True Nil = Branches [(c,Nil)]
-insert c _ False Nil = Nil
-insert c Nothing _ (Branches xs) = Branches ((c,Nil):xs)
-insert c (Just p) _ (Branches ((q,dt):xs)) 
-						| p == q = Branches ((p,insert c Nothing True dt):xs)
-					    | p /= q = Branches ((q, insert c (Just p) False dt):(map (\(celda,dtr) -> (celda,insert c (Just p) False dtr)) xs))  -}
+type Graph = HT.HashTable InfoCelda (S.Set Celda)
 
--- B [(C4,Nil)]			
 
-{-
-	C4
+-- INFOCELL
 
--}
+infocelda :: Celda -> Graph -> IO InfoCelda
+infocelda c g = do expresion <- findExp c g
+		   val <- findValor c g
+		   str <- findStr c g
+	           let info = IC {celda = c, expr = expresion, strexpr = str, valor = val} in return info
 
--- B [(C4,Nil),(A1,Nil)]
+makeinfocelda :: Celda -> Exp -> String ->  Valor -> IO InfoCelda
+makeinfocelda c e s v = let info = IC {celda = c, expr = e, strexpr = s , valor = v} in return info
 
-{-
-	C4	A1
+findExp :: Celda -> Graph -> IO Exp
+findExp c g = do xs <- HT.toList g
+		 if xs == [] then return (Unit ()) else let listUnit = filter (\i -> celda (fst i) == c) xs in
+							    if listUnit == [] then return (Unit ()) 
+									      else let elem     = listUnit!!0
+		 								       result   = expr (fst elem)
+						        		           in return result
+findValor:: Celda -> Graph -> IO Valor
+findValor c g = do xs <- HT.toList g
+	 	   if xs == [] then return (0,"",Ok) else let listUnit = filter (\i -> celda (fst i) == c) xs in
+							      if listUnit == [] then return (0,"",Ok) 
+									        else let elem     = listUnit!!0
+		 								         result   = valor (fst elem)
+						        		             in return result
 
--}
+findStr:: Celda -> Graph -> IO String
+findStr c g = do xs <- HT.toList g
+	 	 if xs == [] then return "" else let listUnit = filter (\i -> celda (fst i) == c) xs in
+							     if listUnit == [] then return "" 
+									       else let elem     = listUnit!!0
+		 								        result   = strexpr (fst elem)
+						        		            in return result
 
--- B [(C4,B [(B3,Nil)]),(A1, Nil)]
+insertExp :: Celda -> Exp -> String -> Valor -> Graph -> IO ()
+insertExp c e s v g = let info = IC {celda = c, expr = e, strexpr = s, valor = v} in do ginsert info g
+							    --evalGraph info g
 
-{-
-	C4	A1
-	|
-       B3	
--}
 
--- B [(C4,B [(B3,Nil),(B4,Nil)]),(A1,Nil)]
 
-{-
-	C4	  A1
-       /  \ 
-      B3  B4
+updateCell :: Celda -> Exp -> String -> Valor -> Graph -> IO ()
+updateCell c e s v     g = do oldExpr <- findExp c g
+		              oldValor <- findValor c g
+			      oldStr <- findStr c g
+	                      let infoOld = IC {celda = c,expr = oldExpr,strexpr = oldStr ,valor = oldValor} in do maybeset <- HT.lookup g infoOld
+						                                                                   case maybeset of
+							                                                               Nothing -> insertExp c e s v g
+							                                                               Just set -> do HT.delete g infoOld
+									                                                              infoNew <- makeinfocelda c e s v
+													                              HT.insert g infoNew set
+-- QUEUES
+type Queue = [Celda]
 
--}
+
+enqueue' :: Celda -> Queue -> IO Queue
+enqueue' x s = return (s++[x])
+
+enqueue :: Celda -> Queue -> IO Queue
+enqueue x s = do s <- enqueue' x s
+	         return s
+
+pop :: Queue -> IO (Celda,Queue)
+pop (x:xs) = return (x,xs)
+
+putQueue :: S.Set Celda -> Queue -> IO Queue
+putQueue set q = return (L.nub (q ++ S.elems set))
+
+
+-- GRAPHS
+newGraph :: IO Graph
+newGraph = HT.new (\x y -> celda x == celda y) (\x -> HT.hashString (fst (celda x)) + HT.hashInt (snd (celda x)))
+
+ginsert :: InfoCelda -> Graph -> IO ()
+ginsert v g = do maybeset <- HT.lookup g v
+		 case maybeset of
+		    Nothing -> HT.insert g v (S.empty) 
+		    Just set -> return ()
+
+
+ginsertEdge :: InfoCelda-> InfoCelda -> Graph -> IO ()
+ginsertEdge v v' g = do maybeset1 <- HT.lookup g v
+			maybeset2 <- HT.lookup g v'
+		        case maybeset1 of
+			    Nothing -> do ginsert v g
+					  ginsertEdge v v' g
+			    Just set1 -> case maybeset2 of
+				 Nothing -> do ginsert v' g
+					       ginsertEdge v v' g
+				 Just set2 -> do b1 <- HT.update g v (S.insert (celda v') set1)
+						 return ()
+
+gremoveEdge :: InfoCelda -> InfoCelda -> Graph -> IO ()
+gremoveEdge v v' g = do maybeset1 <- HT.lookup g v
+			maybeset2 <- HT.lookup g v'
+			case maybeset1 of
+			    Nothing -> return ()
+			    Just set1 -> case maybeset2 of
+			         Nothing -> return ()
+				 Just set2 -> do b1 <- HT.update g v (S.delete (celda v') set1)
+						 return ()
+
+
+app :: Graph -> ((InfoCelda,S.Set Celda) -> IO ()) -> IO ()
+app g f = do xs <- HT.toList g
+	     app' xs f
+
+
+app' :: [(InfoCelda,S.Set Celda)] -> ((InfoCelda,S.Set Celda) -> IO ()) -> IO ()
+app' [] f = return ()
+app' (x:xs) f = do f x
+		   app' xs f
+
+
+bfs'' :: Graph -> Queue ->  S.Set Celda -> (Celda -> Exp -> String -> Graph -> IO ()) -> IO Graph
+bfs'' g [] visited func = return g
+bfs'' g q visited  func = do (i',q') <- pop q
+		             if S.notMember i' visited then(do inf <- infocelda i' g
+							       maybeset <- HT.lookup g inf
+					                       case maybeset of
+						                  Nothing -> return g
+						                  Just set ->(do q <- putQueue set q
+										 expre <- findExp i' g
+										 str <- findStr i' g
+										 func i' expre str g 
+									         g <- bfs'' g q (S.insert i' visited) func
+										 return g
+									     ))
+						       else do g <- bfs'' g q' visited func
+							       return g
+
+bfs' :: Celda -> Graph -> Queue -> (Celda -> Exp -> String -> Graph -> IO ())-> IO Graph
+bfs' i g q func = do q <- putQueue (S.singleton i) q
+		     g <- bfs'' g q S.empty func
+		     return g
+			  
+bfs :: Celda -> Graph -> (Celda -> Exp -> String -> Graph -> IO ()) -> IO Graph
+bfs i g func = do g <- bfs' i g [] func
+		  return g
+
