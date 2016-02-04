@@ -63,8 +63,8 @@ ExpList : ExpEval ')'			 { [$1] }
 
 
 
-parseError :: [Token] -> a
-parseError _ = error "Parse error"
+--parseError :: [Token] -> a
+--parseError _ = error "Parse error"
 
 
 data Token = TokenInt Int
@@ -90,6 +90,8 @@ data Token = TokenInt Int
 	deriving(Show)
 
 
+
+{-
 lexer :: String -> [Token]
 lexer [] = []
 lexer (c:cs) 
@@ -164,7 +166,7 @@ lexCelda [] = []
 lexCelda cs = (TokenCelda (map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a')))columna,read (fila))) : lexer1 rest'
 		where (columna,rest) = span (\x -> isAlpha x) cs
 		      (fila,rest') = span isDigit rest 
-
+-}
 
 }
 
