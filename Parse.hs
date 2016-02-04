@@ -530,19 +530,29 @@ lexer :: String -> [Token]
 lexer [] = []
 lexer (c:cs) 
 	| isDigit c = lexer_ (c:cs)
-	| c == '-'  = TokenMenos : (lexer1 cs)
+	| c == '-'  = lexer_ (c:cs)
 	| c == '='  = TokenEval : (lexer1 cs)
 	| isSpace c = lexer cs 
     	| otherwise = [TokenString (c:cs)]
 
 lexer_ :: String -> [Token]
 lexer_ [] = []
-lexer_ cs = if rest == [] then [TokenFloat (read (num))] else
+lexer_ cs = if cs!!0 /= '-' then
+	    if rest == [] then [TokenFloat (read (num))] else
 		if rest!!0 == '.' then 
 			if rest' == [] then [TokenFloat (read (num ++ num1) / 10^(length num1))] else [TokenString cs] 
 		else [TokenString cs]
+	    else
+	    if rest''' == [] then [TokenMenos,TokenFloat (read (num2))] else
+		if rest'''!!0 == '.' then 
+			if rest'''' == [] then [TokenMenos,TokenFloat (read (num2 ++ num3) / 10^(length num3))] else [TokenString cs] 
+		else [TokenString cs]
 		where (num,rest) = span isDigit cs
 		      (num1,rest') = span isDigit (tail rest)
+		      cs' = tail cs
+		      (spaces,rest'') = span (\i -> i == ' ') cs'
+		      (num2,rest''') = span isDigit rest''
+		      (num3,rest'''') = span isDigit (tail rest''')
 
 
 lexer1 :: String -> [Token]
@@ -577,7 +587,6 @@ lexNum cs = if rest /= [] && rest!!0 == '.' then TokenFloat (read (num ++ num1) 
       where (num,rest) = span isDigit cs
 	    (num1,rest') = span isDigit (tail rest)
 
--- 23.42
 
 lexFunc cs =
    case span isAlpha cs of
@@ -588,8 +597,8 @@ lexFunc cs =
 
 lexCelda :: String -> [Token]
 lexCelda [] = []
-lexCelda cs = (TokenCelda (columna,read (fila))) : lexer1 rest'
-		where (columna,rest) = span (\x -> isAlpha x && (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A')) cs
+lexCelda cs = (TokenCelda (map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a')))columna,read (fila))) : lexer1 rest'
+		where (columna,rest) = span (\x -> isAlpha x) cs
 		      (fila,rest') = span isDigit rest
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
