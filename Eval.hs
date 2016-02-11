@@ -32,11 +32,15 @@ evalExpr ce (Eval e) g = evalExpr' ce e g
 
 evalExpr' :: Celda -> ExpEval -> Graph -> IO Valor
 evalExpr' ce (Var c) g =  do e <- findExp c g
-			     r <- evalExpr c e g
 			     i <- infocelda c g
 			     i' <- infocelda ce g 
-			     ginsertEdge i i' g
-			     return r
+			     b <- existsRoad ce c g
+			     if b then do ginsertEdge i i' g
+					  print b
+					  return (0,"",Err "CICLO DETECTADO") 
+				  else do r <- evalExpr c e g
+					  ginsertEdge i i' g 
+					  return r
 			     
 			     
 evalExpr' ce (EStr s) g = return (0,s,Ok)

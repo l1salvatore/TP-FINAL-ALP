@@ -161,3 +161,33 @@ bfs :: Celda -> Graph -> (Celda -> Exp -> String -> Graph -> IO ()) -> IO Graph
 bfs i g func = do g <- bfs' i g [] func
 		  return g
 
+otherbfs'' :: Graph -> Queue ->  S.Set Celda -> IO [Celda]
+otherbfs'' g [] visited = return []
+otherbfs'' g q visited = do (i',q') <- pop q
+		            if S.notMember i' visited then(do inf <- infocelda i' g
+							      maybeset <- HT.lookup g inf
+					                      case maybeset of
+						                  Nothing -> return []
+						                  Just set ->(do q <- putQueue set q
+										 expre <- findExp i' g
+										 str <- findStr i' g
+									         xs <- otherbfs'' g q (S.insert i' visited)
+										 return (i':xs)
+									     ))
+						      else (do xs <- otherbfs'' g q' visited
+							       return xs)
+
+otherbfs'  :: Celda -> Graph -> Queue -> IO [Celda]
+otherbfs'  i g q = do q <- putQueue (S.singleton i) q
+		      xs <- otherbfs'' g q S.empty
+		      return xs
+			  
+otherbfs :: Celda -> Graph -> IO [Celda]
+otherbfs i g = do xs <- otherbfs' i g []
+		  return xs
+
+
+existsRoad :: Celda -> Celda -> Graph -> IO Bool
+existsRoad x y g = do xs <- otherbfs x g
+		      if elem y xs then return True else return False
+
