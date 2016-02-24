@@ -5,7 +5,7 @@ import Common
 import Eval
 import System.Console.Readline
 
--- parser produced by Happy Version 1.19.0
+-- parser produced by Happy Version 1.18.9
 
 data HappyAbsSyn t4 t5 t6 t7 t8
 	= HappyTerminal (Token)
@@ -533,15 +533,15 @@ data Token = TokenInt Int
 lexer :: String -> [Token]
 lexer [] = []
 lexer (c:cs) 
-	| isDigit c = lexer_ (c:cs)
-	| c == '-'  = lexer_ (c:cs)
-	| c == '='  = TokenEval : (lexer1 cs)
+	| isDigit c = lexer1 (c:cs)
+	| c == '-'  = lexer1 (c:cs)
+	| c == '='  = TokenEval : (lexer2 cs)
 	| isSpace c = lexer cs 
     	| otherwise = [TokenString (c:cs)]
 
-lexer_ :: String -> [Token]
-lexer_ [] = []
-lexer_ cs = if cs!!0 /= '-' then
+lexer1 :: String -> [Token]
+lexer1 [] = []
+lexer1 cs = if cs!!0 /= '-' then
 	    if rest == [] then [TokenFloat (read (num))] else
 		if rest!!0 == '.' then 
 			if rest' == [] then [TokenFloat (read (num ++ num1) / 10^(length num1))] else [TokenString cs] 
@@ -559,107 +559,59 @@ lexer_ cs = if cs!!0 /= '-' then
 		      (num3,rest'''') = span isDigit (tail rest''')
 
 
-lexer1 :: String -> [Token]
-lexer1 [] = []
-lexer1 (c:cs) 
-      | isSpace c = lexer1 cs
+lexer2 :: String -> [Token]
+lexer2 [] = []
+lexer2 (c:cs) 
+      | isSpace c = lexer2 cs
       | isAlpha c && (fromEnum c <= fromEnum 'Z' && fromEnum c >= fromEnum 'A') = lexCelda (c:cs)
       | isAlpha c = lexFunc (c:cs)
       | isDigit c = lexNum (c:cs)
-      | c == '-' = TokenMenos : lexer1 cs
-      | c == '.' = TokenPunto : lexer1 cs
-      | c == ',' = TokenComa : lexer1 cs
-      | c == '"' = TokenComilla : lexer__ cs []
-      | c == '=' = if cs!!0 == '=' then TokenIg : lexer1 (tail cs) else [TokenString (c:cs)]
-      | c == '+' = TokenMas : lexer1 cs
-      | c == '-' = TokenMenos : lexer1 cs
-      | c == '*' = TokenPor : lexer1 cs
-      | c == '/' = TokenDiv : lexer1 cs
-      | c == '(' = TokenParIzq : lexer1 cs
-      | c == ')' = TokenParDer : lexer1 cs
-      | c == '[' = TokenCorIzq : lexer1 cs
-      | c == ']' = TokenCorDer : lexer1 cs
+      | c == '-' = TokenMenos : lexer2 cs
+      | c == '.' = TokenPunto : lexer2 cs
+      | c == ',' = TokenComa : lexer2 cs
+      | c == '"' = TokenComilla : lexer3 cs []
+      | c == '=' = if cs!!0 == '=' then TokenIg : lexer2 (tail cs) else [TokenString (c:cs)]
+      | c == '+' = TokenMas : lexer2 cs
+      | c == '-' = TokenMenos : lexer2 cs
+      | c == '*' = TokenPor : lexer2 cs
+      | c == '/' = TokenDiv : lexer2 cs
+      | c == '(' = TokenParIzq : lexer2 cs
+      | c == ')' = TokenParDer : lexer2 cs
+      | c == '[' = TokenCorIzq : lexer2 cs
+      | c == ']' = TokenCorDer : lexer2 cs
       | otherwise = [TokenString (c:cs)]
 
 
-lexer__ :: String -> String -> [Token]
-lexer__ [] _ = []
-lexer__ ('"':cs) str = (TokenString str) : TokenComilla : lexer1 cs
-lexer__ (c:cs) str = lexer__ cs (str++[c])
+lexer3 :: String -> String -> [Token]
+lexer3 [] _ = []
+lexer3 ('"':cs) str = (TokenString str) : TokenComilla : lexer2 cs
+lexer3 (c:cs) str = lexer3 cs (str++[c])
 
-lexNum cs = if rest /= [] && rest!!0 == '.' then TokenFloat (read (num ++ num1) / 10^(length num1)) : lexer1 rest'  else TokenFloat (read num) : lexer1 rest
+lexNum cs = if rest /= [] && rest!!0 == '.' then TokenFloat (read (num ++ num1) / 10^(length num1)) : lexer2 rest'  else TokenFloat (read num) : lexer2 rest
       where (num,rest) = span isDigit cs
 	    (num1,rest') = span isDigit (tail rest)
 
 
 lexFunc cs =
    case span isAlpha cs of
-      ("suma",rest) -> TokenSUMATORIA : lexer1 rest
-      ("concat",rest)  -> TokenCONCATENACION : lexer1 rest
-      ("abs",rest) -> TokenABSOLUTO : lexer1 rest
-      (otherstr,rest) -> (TokenString otherstr) : lexer1 rest
+      ("suma",rest) -> TokenSUMATORIA : lexer2 rest
+      ("concat",rest)  -> TokenCONCATENACION : lexer2 rest
+      ("abs",rest) -> TokenABSOLUTO : lexer2 rest
+      (otherstr,rest) -> (TokenString otherstr) : lexer2 rest
 
 lexCelda :: String -> [Token]
 lexCelda [] = []
-lexCelda cs = (TokenCelda (map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a')))columna,read (fila))) : lexer1 rest'
+lexCelda cs = (TokenCelda (map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a')))columna,read (fila))) : lexer2 rest'
 		where (columna,rest) = span (\x -> isAlpha x) cs
 		      (fila,rest') = span isDigit rest
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
+{-# LINE 1 "<built-in>" #-}
 {-# LINE 1 "<command-line>" #-}
-
-
-
-
-
-# 1 "/usr/include/stdc-predef.h" 1 3 4
-
-# 17 "/usr/include/stdc-predef.h" 3 4
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 1 "/usr/include/x86_64-linux-gnu/bits/predefs.h" 1 3 4
-
-# 18 "/usr/include/x86_64-linux-gnu/bits/predefs.h" 3 4
-
-
-
-
-
-
-
-
-
-
-
-
-# 31 "/usr/include/stdc-predef.h" 2 3 4
-
-
-
-
-
-
-
-
-# 5 "<command-line>" 2
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp 
 
-{-# LINE 13 "templates/GenericTemplate.hs" #-}
-
-{-# LINE 45 "templates/GenericTemplate.hs" #-}
+{-# LINE 30 "templates/GenericTemplate.hs" #-}
 
 
 
@@ -668,11 +620,11 @@ lexCelda cs = (TokenCelda (map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum
 
 
 
-{-# LINE 66 "templates/GenericTemplate.hs" #-}
+{-# LINE 51 "templates/GenericTemplate.hs" #-}
 
-{-# LINE 76 "templates/GenericTemplate.hs" #-}
+{-# LINE 61 "templates/GenericTemplate.hs" #-}
 
-{-# LINE 85 "templates/GenericTemplate.hs" #-}
+{-# LINE 70 "templates/GenericTemplate.hs" #-}
 
 infixr 9 `HappyStk`
 data HappyStk a = HappyStk a (HappyStk a)
@@ -696,7 +648,7 @@ happyAccept j tk st sts (HappyStk ans _) =
 -----------------------------------------------------------------------------
 -- Arrays only: do the next action
 
-{-# LINE 154 "templates/GenericTemplate.hs" #-}
+{-# LINE 148 "templates/GenericTemplate.hs" #-}
 
 -----------------------------------------------------------------------------
 -- HappyState data type (not arrays)
@@ -717,7 +669,7 @@ newtype HappyState b c = HappyState
 -- Shifting a token
 
 happyShift new_state (1) tk st sts stk@(x `HappyStk` _) =
-     let i = (case x of { HappyErrorToken (i) -> i }) in
+     let (i) = (case x of { HappyErrorToken (i) -> i }) in
 --     trace "shifting the error token" $
      new_state i i tk (HappyState (new_state)) ((st):(sts)) (stk)
 
@@ -760,17 +712,16 @@ happyReduce k nt fn j tk st sts stk
 happyMonadReduce k nt fn (1) tk st sts stk
      = happyFail (1) tk st sts stk
 happyMonadReduce k nt fn j tk st sts stk =
-      case happyDrop k ((st):(sts)) of
-        sts1@(((st1@(HappyState (action))):(_))) ->
-          let drop_stk = happyDropStk k stk in
-          happyThen1 (fn stk tk) (\r -> action nt j tk st1 sts1 (r `HappyStk` drop_stk))
+        happyThen1 (fn stk tk) (\r -> action nt j tk st1 sts1 (r `HappyStk` drop_stk))
+       where (sts1@(((st1@(HappyState (action))):(_)))) = happyDrop k ((st):(sts))
+             drop_stk = happyDropStk k stk
 
 happyMonad2Reduce k nt fn (1) tk st sts stk
      = happyFail (1) tk st sts stk
 happyMonad2Reduce k nt fn j tk st sts stk =
-      case happyDrop k ((st):(sts)) of
-        sts1@(((st1@(HappyState (action))):(_))) ->
-         let drop_stk = happyDropStk k stk
+       happyThen1 (fn stk tk) (\r -> happyNewToken new_state sts1 (r `HappyStk` drop_stk))
+       where (sts1@(((st1@(HappyState (action))):(_)))) = happyDrop k ((st):(sts))
+             drop_stk = happyDropStk k stk
 
 
 
@@ -778,8 +729,6 @@ happyMonad2Reduce k nt fn j tk st sts stk =
 
              new_state = action
 
-          in
-          happyThen1 (fn stk tk) (\r -> happyNewToken new_state sts1 (r `HappyStk` drop_stk))
 
 happyDrop (0) l = l
 happyDrop n ((_):(t)) = happyDrop (n - ((1) :: Int)) t
@@ -790,7 +739,7 @@ happyDropStk n (x `HappyStk` xs) = happyDropStk (n - ((1)::Int)) xs
 -----------------------------------------------------------------------------
 -- Moving to a new state after a reduction
 
-{-# LINE 255 "templates/GenericTemplate.hs" #-}
+{-# LINE 246 "templates/GenericTemplate.hs" #-}
 happyGoto action j tk st = action j j tk (HappyState action)
 
 
@@ -799,7 +748,7 @@ happyGoto action j tk st = action j j tk (HappyState action)
 
 -- parse error if we are in recovery and we fail again
 happyFail (1) tk old_st _ stk@(x `HappyStk` _) =
-     let i = (case x of { HappyErrorToken (i) -> i }) in
+     let (i) = (case x of { HappyErrorToken (i) -> i }) in
 --	trace "failing" $ 
         happyError_ i tk
 
@@ -849,7 +798,7 @@ happyDontSeq a b = b
 -- of deciding to inline happyGoto everywhere, which increases the size of
 -- the generated parser quite a bit.
 
-{-# LINE 321 "templates/GenericTemplate.hs" #-}
+{-# LINE 312 "templates/GenericTemplate.hs" #-}
 {-# NOINLINE happyShift #-}
 {-# NOINLINE happySpecReduce_0 #-}
 {-# NOINLINE happySpecReduce_1 #-}

@@ -5,7 +5,9 @@ import DepTree
 
 
 eval :: Celda -> Exp -> String -> Graph -> IO ()
-eval c e s g =  do v <- evalExpr c e g
+eval c e s g =  do i <- infocelda c g
+		   elimNeightBours g i
+		   v <- evalExpr c e g
 		   updateCell c e s v g
 
 
@@ -41,6 +43,7 @@ evalExpr' ce (Var c) g =  do e <- findExp c g
 				  else do r <- evalExpr c e g
 					  ginsertEdge i i' g 
 					  return r
+
 			     
 			     
 evalExpr' ce (EStr s) g = return (0,s,Ok)

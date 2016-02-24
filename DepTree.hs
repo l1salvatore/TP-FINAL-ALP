@@ -22,7 +22,7 @@ instance Ord InfoCelda where
 type Graph = HT.HashTable InfoCelda (S.Set Celda)
 
 
--- INFOCELL
+{- INFOCELL -}
 
 infocelda :: Celda -> Graph -> IO InfoCelda
 infocelda c g = do expresion <- findExp c g
@@ -56,11 +56,6 @@ findStr c g = do xs <- HT.toList g
 		 								        result   = strexpr (fst elem)
 						        		            in return result
 
-insertExp :: Celda -> Exp -> String -> Valor -> Graph -> IO ()
-insertExp c e s v g = let info = IC {celda = c, expr = e, strexpr = s, valor = v} in do ginsert info g
-							    --evalGraph info g
-
-
 
 updateCell :: Celda -> Exp -> String -> Valor -> Graph -> IO ()
 updateCell c e s v     g = do oldExpr <- findExp c g
@@ -68,11 +63,12 @@ updateCell c e s v     g = do oldExpr <- findExp c g
 			      oldStr <- findStr c g
 	                      let infoOld = IC {celda = c,expr = oldExpr,strexpr = oldStr ,valor = oldValor} in do maybeset <- HT.lookup g infoOld
 						                                                                   case maybeset of
-							                                                               Nothing -> insertExp c e s v g
+							                                                               Nothing -> do infoNew <- makeinfocelda c e s v
+																     ginsert infoNew g 
 							                                                               Just set -> do HT.delete g infoOld
 									                                                              infoNew <- makeinfocelda c e s v
 													                              HT.insert g infoNew set
--- QUEUES
+{- QUEUES -}
 type Queue = [Celda]
 
 
@@ -90,7 +86,8 @@ putQueue :: S.Set Celda -> Queue -> IO Queue
 putQueue set q = return (L.nub (q ++ S.elems set))
 
 
--- GRAPHS
+
+{- GRAPHS -}
 newGraph :: IO Graph
 newGraph = HT.new (\x y -> celda x == celda y) (\x -> HT.hashString (fst (celda x)) + HT.hashInt (snd (celda x)))
 
@@ -124,6 +121,7 @@ gremoveEdge v v' g = do maybeset1 <- HT.lookup g v
 						 return ()
 
 
+-- APP
 app :: Graph -> ((InfoCelda,S.Set Celda) -> IO ()) -> IO ()
 app g f = do xs <- HT.toList g
 	     app' xs f
@@ -135,6 +133,23 @@ app' (x:xs) f = do f x
 		   app' xs f
 
 
+
+appList :: [a] -> (a -> IO ()) -> IO ()
+appList [] f = return ()
+appList (x:xs) f = do f x
+		      appList xs f
+
+-- GET NEIGHTBOURS
+
+getNeightBours :: Graph -> InfoCelda -> IO [InfoCelda]
+getNeightBours g ic = do t <- HT.toList g
+		 	 let t' = map (\(k,v) -> k) (filter (\(k,v) -> S.member (celda ic) v) t) in return t' 
+
+elimNeightBours :: Graph -> InfoCelda -> IO ()
+elimNeightBours g ic = do t <- getNeightBours g ic
+			  appList t (\x -> gremoveEdge x ic g)
+
+-- BFS
 bfs'' :: Graph -> Queue ->  S.Set Celda -> (Celda -> Exp -> String -> Graph -> IO ()) -> IO Graph
 bfs'' g [] visited func = return g
 bfs'' g q visited  func = do (i',q') <- pop q
@@ -161,6 +176,8 @@ bfs :: Celda -> Graph -> (Celda -> Exp -> String -> Graph -> IO ()) -> IO Graph
 bfs i g func = do g <- bfs' i g [] func
 		  return g
 
+
+-- OTHER BFS 
 otherbfs'' :: Graph -> Queue ->  S.Set Celda -> IO [Celda]
 otherbfs'' g [] visited = return []
 otherbfs'' g q visited = do (i',q') <- pop q
@@ -185,8 +202,13 @@ otherbfs'  i g q = do q <- putQueue (S.singleton i) q
 otherbfs :: Celda -> Graph -> IO [Celda]
 otherbfs i g = do xs <- otherbfs' i g []
 		  return xs
+{-
+printGraph :: Graph -> IO ()
+printGraph g = do t <- HT.toList g 
+		  print t
+-}
 
-
+-- EXISTS ROAD
 existsRoad :: Celda -> Celda -> Graph -> IO Bool
 existsRoad x y g = do xs <- otherbfs x g
 		      if elem y xs then return True else return False

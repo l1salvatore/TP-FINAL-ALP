@@ -97,15 +97,15 @@ data Token = TokenInt Int
 lexer :: String -> [Token]
 lexer [] = []
 lexer (c:cs) 
-	| isDigit c = lexer_ (c:cs)
-	| c == '-'  = lexer_ (c:cs)
-	| c == '='  = TokenEval : (lexer1 cs)
+	| isDigit c = lexer1 (c:cs)
+	| c == '-'  = lexer1 (c:cs)
+	| c == '='  = TokenEval : (lexer2 cs)
 	| isSpace c = lexer cs 
     	| otherwise = [TokenString (c:cs)]
 
-lexer_ :: String -> [Token]
-lexer_ [] = []
-lexer_ cs = if cs!!0 /= '-' then
+lexer1 :: String -> [Token]
+lexer1 [] = []
+lexer1 cs = if cs!!0 /= '-' then
 	    if rest == [] then [TokenFloat (read (num))] else
 		if rest!!0 == '.' then 
 			if rest' == [] then [TokenFloat (read (num ++ num1) / 10^(length num1))] else [TokenString cs] 
@@ -123,49 +123,49 @@ lexer_ cs = if cs!!0 /= '-' then
 		      (num3,rest'''') = span isDigit (tail rest''')
 
 
-lexer1 :: String -> [Token]
-lexer1 [] = []
-lexer1 (c:cs) 
-      | isSpace c = lexer1 cs
+lexer2 :: String -> [Token]
+lexer2 [] = []
+lexer2 (c:cs) 
+      | isSpace c = lexer2 cs
       | isAlpha c && (fromEnum c <= fromEnum 'Z' && fromEnum c >= fromEnum 'A') = lexCelda (c:cs)
       | isAlpha c = lexFunc (c:cs)
       | isDigit c = lexNum (c:cs)
-      | c == '-' = TokenMenos : lexer1 cs
-      | c == '.' = TokenPunto : lexer1 cs
-      | c == ',' = TokenComa : lexer1 cs
-      | c == '"' = TokenComilla : lexer__ cs []
-      | c == '=' = if cs!!0 == '=' then TokenIg : lexer1 (tail cs) else [TokenString (c:cs)]
-      | c == '+' = TokenMas : lexer1 cs
-      | c == '-' = TokenMenos : lexer1 cs
-      | c == '*' = TokenPor : lexer1 cs
-      | c == '/' = TokenDiv : lexer1 cs
-      | c == '(' = TokenParIzq : lexer1 cs
-      | c == ')' = TokenParDer : lexer1 cs
-      | c == '[' = TokenCorIzq : lexer1 cs
-      | c == ']' = TokenCorDer : lexer1 cs
+      | c == '-' = TokenMenos : lexer2 cs
+      | c == '.' = TokenPunto : lexer2 cs
+      | c == ',' = TokenComa : lexer2 cs
+      | c == '"' = TokenComilla : lexer3 cs []
+      | c == '=' = if cs!!0 == '=' then TokenIg : lexer2 (tail cs) else [TokenString (c:cs)]
+      | c == '+' = TokenMas : lexer2 cs
+      | c == '-' = TokenMenos : lexer2 cs
+      | c == '*' = TokenPor : lexer2 cs
+      | c == '/' = TokenDiv : lexer2 cs
+      | c == '(' = TokenParIzq : lexer2 cs
+      | c == ')' = TokenParDer : lexer2 cs
+      | c == '[' = TokenCorIzq : lexer2 cs
+      | c == ']' = TokenCorDer : lexer2 cs
       | otherwise = [TokenString (c:cs)]
 
 
-lexer__ :: String -> String -> [Token]
-lexer__ [] _ = []
-lexer__ ('"':cs) str = (TokenString str) : TokenComilla : lexer1 cs
-lexer__ (c:cs) str = lexer__ cs (str++[c])
+lexer3 :: String -> String -> [Token]
+lexer3 [] _ = []
+lexer3 ('"':cs) str = (TokenString str) : TokenComilla : lexer2 cs
+lexer3 (c:cs) str = lexer3 cs (str++[c])
 
-lexNum cs = if rest /= [] && rest!!0 == '.' then TokenFloat (read (num ++ num1) / 10^(length num1)) : lexer1 rest'  else TokenFloat (read num) : lexer1 rest
+lexNum cs = if rest /= [] && rest!!0 == '.' then TokenFloat (read (num ++ num1) / 10^(length num1)) : lexer2 rest'  else TokenFloat (read num) : lexer2 rest
       where (num,rest) = span isDigit cs
 	    (num1,rest') = span isDigit (tail rest)
 
 
 lexFunc cs =
    case span isAlpha cs of
-      ("suma",rest) -> TokenSUMATORIA : lexer1 rest
-      ("concat",rest)  -> TokenCONCATENACION : lexer1 rest
-      ("abs",rest) -> TokenABSOLUTO : lexer1 rest
-      (otherstr,rest) -> (TokenString otherstr) : lexer1 rest
+      ("suma",rest) -> TokenSUMATORIA : lexer2 rest
+      ("concat",rest)  -> TokenCONCATENACION : lexer2 rest
+      ("abs",rest) -> TokenABSOLUTO : lexer2 rest
+      (otherstr,rest) -> (TokenString otherstr) : lexer2 rest
 
 lexCelda :: String -> [Token]
 lexCelda [] = []
-lexCelda cs = (TokenCelda (map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a')))columna,read (fila))) : lexer1 rest'
+lexCelda cs = (TokenCelda (map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a')))columna,read (fila))) : lexer2 rest'
 		where (columna,rest) = span (\x -> isAlpha x) cs
 		      (fila,rest') = span isDigit rest 
 
