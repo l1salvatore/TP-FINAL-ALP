@@ -5,9 +5,9 @@ module Common where
 data Error = Ok | Err String
 	deriving (Show,Eq)
 	
-data Typ = Numeric | Stringg
+data Typ = Numeric | Stringg | Boolean
 
-type Valor = (Float,String,Error)
+type Valor = (Float,String,Maybe Bool,Error)
 
 type Celda = (String, Int)
 
@@ -23,6 +23,7 @@ data Type = TString
 
 data Exp = Str String
 	 | Fl Float
+	 | Bo Bool
 	 | Eval ExpEval
 	 | Unit ()
        deriving(Show,Eq)
@@ -30,11 +31,19 @@ data Exp = Str String
 data ExpEval  = Var Celda
 	      | EStr String
 	      | EFl Float
+	      | EBo Bool
 	      | Mas ExpEval ExpEval
 	      | Menos ExpEval ExpEval
 	      | Por ExpEval ExpEval
 	      | Div ExpEval ExpEval 
 	      | Ig ExpEval ExpEval
+	      | Menor ExpEval ExpEval
+	      | Mayor ExpEval ExpEval
+	      | MenorIg ExpEval ExpEval
+	      | MayorIg ExpEval ExpEval
+	      | And ExpEval ExpEval
+	      | Or ExpEval ExpEval
+	      | Si ExpEval ExpEval ExpEval
 	      | Opuesto ExpEval
 	      | Suma [ExpEval]
 	      | Abs ExpEval

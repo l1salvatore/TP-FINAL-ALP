@@ -8,6 +8,12 @@ import Parse
 import System.Console.Readline
 
 
+printValor :: Valor -> IO ()
+printValor (0,s,Nothing,Ok) = if s /= ""  then print s else putStrLn ""
+printValor (f,"",Nothing,Ok) = if f /= 0 then print f else putStrLn ""
+printValor (0,"",Just b,Ok) = print b
+printValor (f,s,b,Err s') = print (Err s')
+
 pp :: Graph -> IO ()
 pp g = do putStrLn "-------------------"
 	  app g (\(a,b) -> pp' a)
@@ -19,7 +25,7 @@ pp'  i     = do putStr "celda: "
                 putStr "string: "
                 print (strexpr i)
 		putStr "valor: "
-		print (valor i)
+		printValor (valor i)
                 putStrLn "-------------------"
    
 
@@ -39,7 +45,7 @@ interprete gra     = do putStrLn "/////////////////////"
 		                                                Just "_exit" -> return ()
 		                                                Just str1 -> let e = parseExpr (lexer str1) in
 		                                                                do --v <- evalExpr c e gra 
-										   updateCell c e str1 (0,"",Ok) gra
+										   updateCell c e str1 (0,"",Nothing,Ok) gra
 										   gra <- bfs c gra eval
 										   putStrLn "/////////////////////"
 										   pp gra 

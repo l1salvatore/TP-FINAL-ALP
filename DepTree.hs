@@ -42,8 +42,8 @@ findExp c g = do xs <- HT.toList g
 						        		           in return result
 findValor:: Celda -> Graph -> IO Valor
 findValor c g = do xs <- HT.toList g
-	 	   if xs == [] then return (0,"",Ok) else let listUnit = filter (\i -> celda (fst i) == c) xs in
-							      if listUnit == [] then return (0,"",Ok) 
+	 	   if xs == [] then return (0,"",Nothing,Ok) else let listUnit = filter (\i -> celda (fst i) == c) xs in
+							      if listUnit == [] then return (0,"",Nothing,Ok) 
 									        else let elem     = listUnit!!0
 		 								         result   = valor (fst elem)
 						        		             in return result
@@ -202,11 +202,7 @@ otherbfs'  i g q = do q <- putQueue (S.singleton i) q
 otherbfs :: Celda -> Graph -> IO [Celda]
 otherbfs i g = do xs <- otherbfs' i g []
 		  return xs
-{-
-printGraph :: Graph -> IO ()
-printGraph g = do t <- HT.toList g 
-		  print t
--}
+
 
 -- EXISTS ROAD
 existsRoad :: Celda -> Celda -> Graph -> IO Bool

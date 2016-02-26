@@ -21,6 +21,12 @@ import System.Console.Readline
 	'='	 { TokenEval }
 	'"'	 { TokenComilla }
 	'=='     { TokenIg  }
+	'<'      { TokenMenor }
+	'>'      { TokenMayor }
+	'<='     { TokenMenorIg }
+	'>='     { TokenMayorIg }
+	'&'	 { TokenAnd }
+	'|'	 { TokenOr }
 	'+'	 { TokenMas }
 	'-'	 { TokenMenos }
 	'*'	 { TokenPor }
@@ -30,16 +36,27 @@ import System.Console.Readline
 	'['	 { TokenCorIzq }
 	']'	 { TokenCorDer }
 	suma	 { TokenSUMATORIA }
+	si	 { TokenSI }
 	concat   { TokenCONCATENACION }
 	absoluto { TokenABSOLUTO }
+	true 	 { TokenTRUE }
+	false	 { TokenFALSE }
 %%
 
 Exp : string				 { Str $1}
     | float				     { Fl $1 }
+    | true				 { Bo True }
+    | false				 { Bo False }
     | '-' float				 { Fl (-1*$2) }
     | '=' ExpEval		 	 { Eval $2 }
 
 ExpEval : ExpEval '==' ExpEvalT	 	 { Ig $1 $3}
+	| ExpEval '<' ExpEvalT		 { Menor $1 $3}
+	| ExpEval '>' ExpEvalT		 { Mayor $1 $3}
+	| ExpEval '<=' ExpEvalT		 { MenorIg $1 $3 }
+	| ExpEval '>=' ExpEvalT		 { MayorIg $1 $3 }
+	| ExpEval '&' ExpEvalT		 { And $1 $3 }
+	| ExpEval '|' ExpEvalT		 { Or $1 $3 }
 	| ExpEval '+' ExpEvalT 		 { Mas $1 $3 }
 	| ExpEval '-' ExpEvalT		 { Menos $1 $3 } 
 	| ExpEvalT			 { $1 }
@@ -50,11 +67,14 @@ ExpEvalT : ExpEvalT '*' ExpEvalF	 { Por $1 $3 }
 
 ExpEvalF : float			 { EFl $1 }
 	 | celda   	 		 { Var $1 }
+	 | true				 { EBo True }
 	 | '"' string '"'	 	 { EStr $2 }
+	 | false			 { EBo False }
 	 | '(' ExpEval ')'		 { $2 }
 	 | suma '(' ExpList		 { Suma $3 }
 	 | concat '(' ExpList		 { Concat $3 }
 	 | absoluto '(' ExpEval ')'	 { Abs $3 }
+	 | si '(' ExpEval ',' ExpEval ',' ExpEval ')' { Si $3 $5 $7 }
 	 | '-' ExpEvalF			 { Opuesto $2 }
 	 
 ExpList : ExpEval ')'			 { [$1] }
@@ -78,6 +98,13 @@ data Token = TokenInt Int
 	   | TokenEval 
 	   | TokenComilla 
 	   | TokenIg  
+	   | TokenMenor
+	   | TokenMayor
+	   | TokenMenorIg
+	   | TokenMayorIg
+	   | TokenAnd
+	   | TokenOr
+	   | TokenSI
 	   | TokenMas 
 	   | TokenMenos 
 	   | TokenPor 
@@ -89,6 +116,8 @@ data Token = TokenInt Int
 	   | TokenSUMATORIA 
 	   | TokenCONCATENACION 
 	   | TokenABSOLUTO 
+	   | TokenTRUE
+	   | TokenFALSE
 	deriving(Show)
 
 
@@ -135,6 +164,10 @@ lexer2 (c:cs)
       | c == ',' = TokenComa : lexer2 cs
       | c == '"' = TokenComilla : lexer3 cs []
       | c == '=' = if cs!!0 == '=' then TokenIg : lexer2 (tail cs) else [TokenString (c:cs)]
+      | c == '<' = if cs!!0 == '=' then TokenMenorIg : lexer2 (tail cs) else TokenMenor : lexer2 cs
+      | c == '>' = if cs!!0 == '=' then TokenMayorIg : lexer2 (tail cs) else TokenMayor : lexer2 cs
+      | c == '&' = TokenAnd : lexer2 cs
+      | c == '|' = TokenOr : lexer2 cs
       | c == '+' = TokenMas : lexer2 cs
       | c == '-' = TokenMenos : lexer2 cs
       | c == '*' = TokenPor : lexer2 cs
@@ -159,8 +192,11 @@ lexNum cs = if rest /= [] && rest!!0 == '.' then TokenFloat (read (num ++ num1) 
 lexFunc cs =
    case span isAlpha cs of
       ("suma",rest) -> TokenSUMATORIA : lexer2 rest
+      ("si",rest) -> TokenSI : lexer2 rest
       ("concat",rest)  -> TokenCONCATENACION : lexer2 rest
       ("abs",rest) -> TokenABSOLUTO : lexer2 rest
+      ("true",rest) -> TokenTRUE : lexer2 rest
+      ("false",rest) -> TokenFALSE : lexer2 rest
       (otherstr,rest) -> (TokenString otherstr) : lexer2 rest
 
 lexCelda :: String -> [Token]
