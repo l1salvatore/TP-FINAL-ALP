@@ -2,7 +2,7 @@
 module Parse where
 import Data.Char
 import Common
-import Eval
+--import Eval
 import System.Console.Readline
 
 -- parser produced by Happy Version 1.18.9

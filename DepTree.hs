@@ -9,11 +9,14 @@ import qualified HashTables as HT
 
 import Common
 
+import ModValor
 
-data InfoCelda = IC {celda :: Celda,
-		     expr :: Exp,
+data InfoCelda = IC {
+		     celda :: Celda,
+		     --expr :: Exp,
 		     strexpr :: String,
-		     valor :: Valor}
+		     valor :: Valor , 
+		     typ :: Typ}
 		deriving (Show,Eq)
 
 instance Ord InfoCelda where
@@ -24,26 +27,17 @@ type Graph = HT.HashTable InfoCelda (S.Set Celda)
 
 {- INFOCELL -}
 
-infocelda :: Celda -> Graph -> IO InfoCelda
-infocelda c g = do expresion <- findExp c g
-		   val <- findValor c g
-		   str <- findStr c g
-	           let info = IC {celda = c, expr = expresion, strexpr = str, valor = val} in return info
-
-makeinfocelda :: Celda -> Exp -> String ->  Valor -> IO InfoCelda
-makeinfocelda c e s v = let info = IC {celda = c, expr = e, strexpr = s , valor = v} in return info
-
-findExp :: Celda -> Graph -> IO Exp
-findExp c g = do xs <- HT.toList g
-		 if xs == [] then return (Unit ()) else let listUnit = filter (\i -> celda (fst i) == c) xs in
-							    if listUnit == [] then return (Unit ()) 
+findTy :: Celda -> Graph -> IO Typ
+findTy c g = do xs <- HT.toList g
+		if xs == [] then return TUnit else let listUnit = filter (\i -> celda (fst i) == c) xs in
+							    if listUnit == [] then return TUnit
 									      else let elem     = listUnit!!0
-		 								       result   = expr (fst elem)
+		 								       result   = typ (fst elem)
 						        		           in return result
 findValor:: Celda -> Graph -> IO Valor
 findValor c g = do xs <- HT.toList g
-	 	   if xs == [] then return (0,"",Nothing,Ok) else let listUnit = filter (\i -> celda (fst i) == c) xs in
-							      if listUnit == [] then return (0,"",Nothing,Ok) 
+	 	   if xs == [] then return nuevoValor else let listUnit = filter (\i -> celda (fst i) == c) xs in
+							      if listUnit == [] then return nuevoValor 
 									        else let elem     = listUnit!!0
 		 								         result   = valor (fst elem)
 						        		             in return result
@@ -56,28 +50,38 @@ findStr c g = do xs <- HT.toList g
 		 								        result   = strexpr (fst elem)
 						        		            in return result
 
+-- dado una celda y un grafo busca su información en el grafo
+infocelda :: Celda -> Graph -> IO InfoCelda
+infocelda c g = do ty <- findTy c g
+		   val <- findValor c g
+		   str <- findStr c g
+	           let info = IC {celda = c, typ = ty, strexpr = str, valor = val} in return info
 
-updateCell :: Celda -> Exp -> String -> Valor -> Graph -> IO ()
-updateCell c e s v     g = do oldExpr <- findExp c g
-		              oldValor <- findValor c g
-			      oldStr <- findStr c g
-	                      let infoOld = IC {celda = c,expr = oldExpr,strexpr = oldStr ,valor = oldValor} in do maybeset <- HT.lookup g infoOld
-						                                                                   case maybeset of
-							                                                               Nothing -> do infoNew <- makeinfocelda c e s v
-																     ginsert infoNew g 
-							                                                               Just set -> do HT.delete g infoOld
-									                                                              infoNew <- makeinfocelda c e s v
-													                              HT.insert g infoNew set
+
+-- crea una estructura información
+makeinfocelda :: Celda -> Typ -> String ->  Valor -> IO InfoCelda
+makeinfocelda c t s v = let info = IC {celda = c, typ = t , strexpr = s , valor = v} in return info
+
+
+
+
+-- dado una celda, una expresión , una string, y un valor actualiza la info de una celda en el grafo
+updateCell :: Celda -> Typ -> String -> Valor -> Graph -> IO ()
+updateCell c t s v g = do infoOld <- infocelda c g 
+			  maybeset <- HT.lookup g infoOld
+			  case maybeset of
+				Nothing -> do infoNew <- makeinfocelda c t s v
+					      ginsert infoNew g 
+				Just set -> do HT.delete g infoOld
+					       infoNew <- makeinfocelda c t s v
+					       HT.insert g infoNew set
 {- QUEUES -}
 type Queue = [Celda]
 
 
-enqueue' :: Celda -> Queue -> IO Queue
-enqueue' x s = return (s++[x])
 
 enqueue :: Celda -> Queue -> IO Queue
-enqueue x s = do s <- enqueue' x s
-	         return s
+enqueue x s = return (s++[x])
 
 pop :: Queue -> IO (Celda,Queue)
 pop (x:xs) = return (x,xs)
@@ -150,7 +154,7 @@ elimNeightBours g ic = do t <- getNeightBours g ic
 			  appList t (\x -> gremoveEdge x ic g)
 
 -- BFS
-bfs'' :: Graph -> Queue ->  S.Set Celda -> (Celda -> Exp -> String -> Graph -> IO ()) -> IO Graph
+bfs'' :: Graph -> Queue ->  S.Set Celda -> (Celda -> Graph -> IO ()) -> IO Graph
 bfs'' g [] visited func = return g
 bfs'' g q visited  func = do (i',q') <- pop q
 		             if S.notMember i' visited then(do inf <- infocelda i' g
@@ -158,21 +162,19 @@ bfs'' g q visited  func = do (i',q') <- pop q
 					                       case maybeset of
 						                  Nothing -> return g
 						                  Just set ->(do q <- putQueue set q
-										 expre <- findExp i' g
-										 str <- findStr i' g
-										 func i' expre str g 
+										 func i' g 
 									         g <- bfs'' g q (S.insert i' visited) func
 										 return g
 									     ))
 						       else do g <- bfs'' g q' visited func
 							       return g
 
-bfs' :: Celda -> Graph -> Queue -> (Celda -> Exp -> String -> Graph -> IO ())-> IO Graph
+bfs' :: Celda -> Graph -> Queue -> (Celda -> Graph -> IO ())-> IO Graph
 bfs' i g q func = do q <- putQueue (S.singleton i) q
 		     g <- bfs'' g q S.empty func
 		     return g
 			  
-bfs :: Celda -> Graph -> (Celda -> Exp -> String -> Graph -> IO ()) -> IO Graph
+bfs :: Celda -> Graph -> (Celda -> Graph -> IO ()) -> IO Graph
 bfs i g func = do g <- bfs' i g [] func
 		  return g
 
@@ -186,8 +188,6 @@ otherbfs'' g q visited = do (i',q') <- pop q
 					                      case maybeset of
 						                  Nothing -> return []
 						                  Just set ->(do q <- putQueue set q
-										 expre <- findExp i' g
-										 str <- findStr i' g
 									         xs <- otherbfs'' g q (S.insert i' visited)
 										 return (i':xs)
 									     ))

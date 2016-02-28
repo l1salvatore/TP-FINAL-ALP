@@ -5,14 +5,19 @@ import Common
 import Eval
 import DepTree
 import Parse
+import ModValor
 import System.Console.Readline
 
 
-printValor :: Valor -> IO ()
-printValor (0,s,Nothing,Ok) = if s /= ""  then print s else putStrLn ""
-printValor (f,"",Nothing,Ok) = if f /= 0 then print f else putStrLn ""
-printValor (0,"",Just b,Ok) = print b
-printValor (f,s,b,Err s') = print (Err s')
+printValor :: Typ -> Valor -> IO ()
+printValor TNumeric v = print (num v)
+printValor TString v = print (str v)
+printValor TBoolean v = case (boo v) of
+			  Just b -> print b
+printValor TUnit v = case (err v) of
+			Ok -> putStrLn ""
+			Err s -> print (Err s)
+
 
 pp :: Graph -> IO ()
 pp g = do putStrLn "-------------------"
@@ -25,7 +30,7 @@ pp'  i     = do putStr "celda: "
                 putStr "string: "
                 print (strexpr i)
 		putStr "valor: "
-		printValor (valor i)
+		printValor (typ i) (valor i)
                 putStrLn "-------------------"
    
 
@@ -43,13 +48,11 @@ interprete gra     = do putStrLn "/////////////////////"
 		                                            case y of
 		                                                Nothing -> return ()
 		                                                Just "_exit" -> return ()
-		                                                Just str1 -> let e = parseExpr (lexer str1) in
-		                                                                do --v <- evalExpr c e gra 
-										   updateCell c e str1 (0,"",Nothing,Ok) gra
-										   gra <- bfs c gra eval
-										   putStrLn "/////////////////////"
-										   pp gra 
-										   interprete gra
+		                                                Just str1 -> do updateCell c TUnit str1 nuevoValor gra --let e = parseExpr (lexer str1) in
+										gra <- bfs c gra evalCelda
+										putStrLn "/////////////////////"
+										pp gra 
+										interprete gra
 		                       _              -> error("sintax error") >>= (\_ -> interprete gra)
 main :: IO ()                                           
 main = do g <- newGraph

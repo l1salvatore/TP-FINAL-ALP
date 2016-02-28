@@ -2,25 +2,17 @@
 module Common where
 
 
+-- TIPOS DE DATOS
 data Error = Ok | Err String
 	deriving (Show,Eq)
 	
-data Typ = Numeric | Stringg | Boolean
+data Typ = TNumeric | TString | TBoolean | TUnit
+	deriving (Eq,Show)
 
-type Valor = (Float,String,Maybe Bool,Error)
 
 type Celda = (String, Int)
 
-natural :: Int -> Bool
-natural x = x >= 0
-{-
-
-data Type = TString
-	 |  TFloat
-	 |  TUnit
-	deriving(Show,Eq)
--}
-
+-- AST
 data Exp = Str String
 	 | Fl Float
 	 | Bo Bool

@@ -3,7 +3,7 @@
 module Parse where
 import Data.Char
 import Common
-import Eval
+--import Eval
 import System.Console.Readline
 }
 
