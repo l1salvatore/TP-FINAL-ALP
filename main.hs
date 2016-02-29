@@ -12,8 +12,7 @@ import System.Console.Readline
 printValor :: Typ -> Valor -> IO ()
 printValor TNumeric v = print (num v)
 printValor TString v = print (str v)
-printValor TBoolean v = case (boo v) of
-			  Just b -> print b
+printValor TBoolean v = print (boo v)
 printValor TUnit v = case (err v) of
 			Ok -> putStrLn ""
 			Err s -> print (Err s)
@@ -37,24 +36,26 @@ pp'  i     = do putStr "celda: "
 
 
 interprete :: Graph -> IO ()
-interprete gra     = do putStrLn "/////////////////////"
+interprete gra     =(do putStrLn "/////////////////////"
 			x <- readline "Celda> "
                         case x of
 		                Nothing -> return ()
 		                Just "_exit" -> return ()
-		                Just str -> case (parseExpr ([TokenEval] ++ lexCelda str)) of
-		                       (Eval (Var c)) -> do putStrLn ""
-		                                            y <- readline "Expresion> "
-		                                            case y of
-		                                                Nothing -> return ()
-		                                                Just "_exit" -> return ()
-		                                                Just str1 -> do updateCell c TUnit str1 nuevoValor gra --let e = parseExpr (lexer str1) in
-										gra <- bfs c gra evalCelda
-										putStrLn "/////////////////////"
-										pp gra 
-										interprete gra
-		                       _              -> error("sintax error") >>= (\_ -> interprete gra)
-main :: IO ()                                           
+		                Just str -> do e <- (parseExpr ([TokenEval] ++ lexCelda str))
+					       case e of
+		                                   (Eval (Var c)) -> do putStrLn ""
+		                                                        y <- readline "Expresion> "
+		                                                        case y of
+		                                                           Nothing -> return ()
+		                                                           Just "_exit" -> return ()
+		                                                           Just str1 -> do updateCell c TUnit str1 nuevoValor gra --let e = parseExpr (lexer str1) in
+										           gra <- bfs c gra evalCelda
+										           putStrLn "/////////////////////"
+										           pp gra 
+										           interprete gra
+		                                   _              -> ioError (error("sintax error")))
+		     `catch` (\e -> do {print "Parse Error" ; interprete gra })
+main :: IO ()                                                       
 main = do g <- newGraph
 	  interprete g 
                                                      

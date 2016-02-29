@@ -5,7 +5,7 @@ import Common
 data Valor = Val { 
 		   num :: Float,
 		   str :: String,
-		   boo :: Maybe Bool,
+		   boo :: Bool,
 		   err :: Error
 		 }
 	deriving (Show,Eq)
@@ -13,7 +13,7 @@ data Valor = Val {
 nuevoValor :: Valor
 nuevoValor = Val { num = 0,
 		   str = "",
-		   boo = Nothing,
+		   boo = True,
 		   err = Ok
 		 }
 
@@ -28,7 +28,7 @@ funcUnString f v = if (err v == Ok) then return (TString,string (f (str v))) els
 string :: String -> Valor
 string s = Val {    num = 0,
 		    str = s,
-		    boo = Nothing,
+		    boo = True,
 		    err = Ok
 		     }
 
@@ -42,29 +42,26 @@ funcUnNumeric f v = if (err v == Ok) then return (TNumeric,numeric (f (num v))) 
 numeric :: Float -> Valor
 numeric n = Val { num = n,
 		  str = "",
-		  boo = Nothing,
+		  boo = True,
 		  err = Ok
 		     }
 
 funcBoolean :: (Bool -> Bool -> Bool) -> Valor -> Valor -> IO (Typ,Valor)
-funcBoolean f v1 v2 = if (err v1 == Ok && err v2 == Ok) then case (boo v1) of 
-							Nothing -> case (boo v2) of
-								Nothing -> return (TBoolean,boolean True)
-							        Just b2 -> return (TBoolean,boolean b2)
-							Just b1 -> case (boo v2) of
-								Nothing -> return (TBoolean,boolean b1)
-								Just b2 -> return (TBoolean,boolean (f b1 b2)) 
-		      else if (err v1 /= Ok) then raise (err v1) else raise (err v2)
+funcBoolean f v1 v2 = if (err v1 == Ok && err v2 == Ok) then return (TBoolean,boolean (f (boo v1) (boo v2))) else 
+		      if (err v1 /= Ok) then raise (err v1) else raise (err v2)
+
+funcUnBoolean :: (Bool -> Bool) -> Valor -> IO (Typ,Valor)
+funcUnBoolean f v = if (err v == Ok) then return (TBoolean,boolean (f (boo v))) else raise (err v)
 
 boolean :: Bool -> Valor
 boolean b = Val { num = 0,
 		  str = "",
-		  boo = Just b,
+		  boo = b,
 		  err = Ok
 		}
 
 raise :: Error -> IO (Typ,Valor)
-raise e = return (TUnit, Val { num = 0, str = "", boo = Nothing, err = e})
+raise e = return (TUnit, Val { num = 0, str = "", boo = True, err = e})
 
 
 {-

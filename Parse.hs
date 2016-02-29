@@ -4,6 +4,7 @@ import Data.Char
 import Common
 --import Eval
 import System.Console.Readline
+import Control.Monad.Except
 
 -- parser produced by Happy Version 1.18.9
 
@@ -849,32 +850,24 @@ happyNewToken action sts stk (tk:tks) =
 happyError_ 38 tk tks = happyError' tks
 happyError_ _ tk tks = happyError' (tk:tks)
 
-newtype HappyIdentity a = HappyIdentity a
-happyIdentity = HappyIdentity
-happyRunIdentity (HappyIdentity a) = a
-
-instance Monad HappyIdentity where
-    return = HappyIdentity
-    (HappyIdentity p) >>= q = q p
-
-happyThen :: () => HappyIdentity a -> (a -> HappyIdentity b) -> HappyIdentity b
-happyThen = (>>=)
-happyReturn :: () => a -> HappyIdentity a
+happyThen :: () => IO a -> (a -> IO b) -> IO b
+happyThen = ((>>=))
+happyReturn :: () => a -> IO a
 happyReturn = (return)
-happyThen1 m k tks = (>>=) m (\a -> k a tks)
-happyReturn1 :: () => a -> b -> HappyIdentity a
+happyThen1 m k tks = ((>>=)) m (\a -> k a tks)
+happyReturn1 :: () => a -> b -> IO a
 happyReturn1 = \a tks -> (return) a
-happyError' :: () => [(Token)] -> HappyIdentity a
-happyError' = HappyIdentity . parseError
+happyError' :: () => [(Token)] -> IO a
+happyError' = parseError
 
-parseExpr tks = happyRunIdentity happySomeParser where
+parseExpr tks = happySomeParser where
   happySomeParser = happyThen (happyParse action_0 tks) (\x -> case x of {HappyAbsSyn4 z -> happyReturn z; _other -> notHappyAtAll })
 
 happySeq = happyDontSeq
 
 
-parseError :: [Token] -> a
-parseError _ = error "Parse error"
+parseError :: [Token] -> IO a
+parseError _ = ioError (error "Parse error")
 
 
 
@@ -991,9 +984,12 @@ lexFunc cs =
 
 lexCelda :: String -> [Token]
 lexCelda [] = []
-lexCelda cs = (TokenCelda (map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a')))columna,read (fila))) : lexer2 rest'
+lexCelda cs = t3 : lexer2 rest'
 		where (columna,rest) = span (\x -> isAlpha x) cs
-		      (fila,rest') = span isDigit rest
+		      t1 	  = map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a'))) columna
+		      (fila,rest') = if rest == [] then ("",[]) else span isDigit rest 
+		      t2	 = if fila /= "" then read (fila) else -555
+		      t3 	 = if t2 /= -555 then TokenCelda (t1,t2) else TokenString (t1++"-555")
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "<built-in>" #-}

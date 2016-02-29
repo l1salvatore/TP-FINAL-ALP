@@ -9,6 +9,8 @@ data Error = Ok | Err String
 data Typ = TNumeric | TString | TBoolean | TUnit
 	deriving (Eq,Show)
 
+eqTypes :: Typ -> Typ -> Bool
+eqTypes t1 t2 = t1 == t2 || t1 == TUnit
 
 type Celda = (String, Int)
 

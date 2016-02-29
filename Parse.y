@@ -5,11 +5,14 @@ import Data.Char
 import Common
 --import Eval
 import System.Console.Readline
+import Control.Monad.Except
+
 }
 
 %name parseExpr
 %tokentype { Token }
 %error { parseError }
+%monad { IO } { (>>=) } { return }
 
 %token
 	int	 { TokenInt $$ }
@@ -83,8 +86,8 @@ ExpList : ExpEval ')'			 { [$1] }
 
 
 
-parseError :: [Token] -> a
-parseError _ = error "Parse error"
+parseError :: [Token] -> IO a
+parseError _ = ioError (error "Parse error")
 
 
 
@@ -201,10 +204,13 @@ lexFunc cs =
 
 lexCelda :: String -> [Token]
 lexCelda [] = []
-lexCelda cs = (TokenCelda (map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a')))columna,read (fila))) : lexer2 rest'
+lexCelda cs = t3 : lexer2 rest'
 		where (columna,rest) = span (\x -> isAlpha x) cs
-		      (fila,rest') = span isDigit rest 
-
+		      t1 	  = map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a'))) columna
+		      (fila,rest') = if rest == [] then ("",[]) else span isDigit rest 
+		      t2	 = if fila /= "" then read (fila) else -555
+		      t3 	 = if t2 /= -555 then TokenCelda (t1,t2) else TokenString (t1++"-555")
+		       
 
 }
 
