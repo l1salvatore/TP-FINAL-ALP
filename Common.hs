@@ -38,6 +38,7 @@ data ExpEval  = Var Celda
 	      | And ExpEval ExpEval
 	      | Or ExpEval ExpEval
 	      | Si ExpEval ExpEval ExpEval
+	      | Potencia ExpEval ExpEval
 	      | Opuesto ExpEval
 	      | Suma [ExpEval]
 	      | Abs ExpEval

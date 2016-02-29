@@ -15,7 +15,6 @@ import Control.Monad.Except
 %monad { IO } { (>>=) } { return }
 
 %token
-	int	 { TokenInt $$ }
 	string	 { TokenString $$ }
 	float	 { TokenFloat $$ }
 	celda    { TokenCelda $$ }
@@ -38,6 +37,7 @@ import Control.Monad.Except
 	')'	 { TokenParDer }
 	'['	 { TokenCorIzq }
 	']'	 { TokenCorDer }
+	'^'	 { TokenPot }
 	suma	 { TokenSUMATORIA }
 	si	 { TokenSI }
 	concat   { TokenCONCATENACION }
@@ -65,6 +65,7 @@ ExpEval : ExpEval '==' ExpEvalT	 	 { Ig $1 $3}
 	| ExpEvalT			 { $1 }
 
 ExpEvalT : ExpEvalT '*' ExpEvalF	 { Por $1 $3 }
+	 | ExpEvalT '^' ExpEvalF	 { Potencia $1 $3 }
 	 | ExpEvalT '/' ExpEvalF	 { Div $1 $3 }
 	 | ExpEvalF			 { $1 }
 
@@ -92,8 +93,7 @@ parseError _ = ioError (error "Parse error")
 
 
 
-data Token = TokenInt Int
-	   | TokenString String
+data Token = TokenString String
 	   | TokenFloat Float
 	   | TokenCelda (String,Int)
 	   | TokenPunto
@@ -116,6 +116,7 @@ data Token = TokenInt Int
 	   | TokenParDer 
 	   | TokenCorIzq
 	   | TokenCorDer 
+	   | TokenPot
 	   | TokenSUMATORIA 
 	   | TokenCONCATENACION 
 	   | TokenABSOLUTO 
@@ -174,6 +175,7 @@ lexer2 (c:cs)
       | c == '+' = TokenMas : lexer2 cs
       | c == '-' = TokenMenos : lexer2 cs
       | c == '*' = TokenPor : lexer2 cs
+      | c == '^' = TokenPot : lexer2 cs
       | c == '/' = TokenDiv : lexer2 cs
       | c == '(' = TokenParIzq : lexer2 cs
       | c == ')' = TokenParDer : lexer2 cs

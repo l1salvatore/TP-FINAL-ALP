@@ -70,6 +70,8 @@ evalExpr' ce (Div e1 e2) g =  do (t1,v1) <- evalExpr' ce e1 g
 					if (num v2) /= 0 then funcNumeric (\x y -> x/y) v1 v2 else raise (Err "DIVISION POR CERO")
 				 else raise (Err "VALOR")
 			         
+
+
 evalExpr' ce (Ig e1 e2) g =do a <- evalExpr' ce e1 g
 			      b <- evalExpr' ce e2 g
 			      return (TBoolean, boolean (a == b))
@@ -153,6 +155,10 @@ evalExpr' ce (Si e1 e2 e3) g = do (t1,v) <- evalExpr' ce e1 g
 						    return tv2 
 					   else raise (err v)
 				  else raise (Err "VALOR") 
+
+evalExpr' ce (Potencia e1 e2) g = do (t1,v1) <- evalExpr' ce e1 g
+				     (t2,v2) <- evalExpr' ce e2 g
+				     if (eqTypes t1 TNumeric && eqTypes t2 TNumeric) then funcNumeric (\x y -> x**y) v1 v2 else raise (Err "VALOR")
 
 
 {-			
