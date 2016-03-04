@@ -126,12 +126,12 @@ gremoveEdge v v' g = do maybeset1 <- HT.lookup g v
 
 
 -- APP
-app :: Graph -> ((InfoCelda,S.Set Celda) -> IO ()) -> IO ()
+app :: Graph -> (InfoCelda-> IO ()) -> IO ()
 app g f = do xs <- HT.toList g
-	     app' xs f
+	     app' (map (\(a,b) -> a) xs) f
 
 
-app' :: [(InfoCelda,S.Set Celda)] -> ((InfoCelda,S.Set Celda) -> IO ()) -> IO ()
+app' :: [InfoCelda] -> (InfoCelda -> IO ()) -> IO ()
 app' [] f = return ()
 app' (x:xs) f = do f x
 		   app' xs f

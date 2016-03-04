@@ -1025,7 +1025,7 @@ lexCelda cs = t3 : lexer2 rest'
 		      t1 	  = map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a'))) columna
 		      (fila,rest') = if rest == [] then ("",[]) else span isDigit rest 
 		      t2	 = if fila /= "" then read (fila) else -555
-		      t3 	 = if t2 /= -555 then TokenCelda (t1,t2) else TokenString (t1++"-555")
+		      t3 	 = if (t2 /= -555) && (length t1 == 1) && (t2 <= 99) then TokenCelda (t1,t2) else TokenString (t1++"-555")
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 {-# LINE 1 "<built-in>" #-}
