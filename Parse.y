@@ -38,6 +38,7 @@ import Control.Monad.Except
 	'['	 { TokenCorIzq }
 	']'	 { TokenCorDer }
 	'^'	 { TokenPot }
+	':'	 { TokenDoblePunto }
 	suma	 { TokenSUMATORIA }
 	si	 { TokenSI }
 	concat   { TokenCONCATENACION }
@@ -71,6 +72,7 @@ ExpEvalT : ExpEvalT '*' ExpEvalF	 { Por $1 $3 }
 
 ExpEvalF : float			 { EFl $1 }
 	 | celda   	 		 { Var $1 }
+	 | celda ':' celda		 { Ran $1 $3 }
 	 | true				 { EBo True }
 	 | '"' string '"'	 	 { EStr $2 }
 	 | false			 { EBo False }
@@ -83,6 +85,7 @@ ExpEvalF : float			 { EFl $1 }
 	 
 ExpList : ExpEval ')'			 { [$1] }
 	| ExpEval ',' ExpList		 { $1:$3 } 
+
 {
 
 
@@ -108,6 +111,7 @@ data Token = TokenString String
 	   | TokenAnd
 	   | TokenOr
 	   | TokenSI
+	   | TokenDoblePunto
 	   | TokenMas 
 	   | TokenMenos 
 	   | TokenPor 
@@ -176,6 +180,7 @@ lexer2 (c:cs)
       | c == '-' = TokenMenos : lexer2 cs
       | c == '*' = TokenPor : lexer2 cs
       | c == '^' = TokenPot : lexer2 cs
+      | c == ':' = TokenDoblePunto : lexer2 cs
       | c == '/' = TokenDiv : lexer2 cs
       | c == '(' = TokenParIzq : lexer2 cs
       | c == ')' = TokenParDer : lexer2 cs

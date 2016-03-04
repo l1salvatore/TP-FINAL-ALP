@@ -6,6 +6,19 @@ import qualified Data.Set as S
 import Control.Monad.State
 import Parse
 import ModValor
+import Data.Char
+
+
+
+armarList :: Celda -> Celda -> Graph -> IO [ExpEval]
+armarList (c1,n1) (c2,n2) g = if c1 == c2 then if n1 == n2 then do return [Var (c2,n2)] 
+					                   else if n1 > n2 then return [] 
+									   else do explist <- armarList (c1,n1+1) (c2,n2) g
+										   return (Var (c2,n1) : explist)
+					  else if (fromEnum (c1!!0)) > (fromEnum (c2!!0)) then return []
+									   else do explist1 <- armarList (c1,n1) (c1,n2) g
+										   explist2 <- armarList ([chr (fromEnum (c1!!0)+1)],n1) (c2,n2) g
+										   return (explist1 ++ explist2)
 
 expr :: String -> IO Exp
 expr "" = return (Unit ())
@@ -41,7 +54,7 @@ evalExpr' ce (Var c) g =  do i <- infocelda c g
 					  ginsertEdge i i' g 
 					  return r
 
-			     
+evalExpr' ce (Ran c1 c2) g = raise (Err "VALOR")
 			     
 evalExpr' ce (EStr s) g = return (TString,string s)
 
@@ -119,6 +132,8 @@ evalExpr' ce (Or e1 e2) g = do (t1,v1) <- evalExpr' ce e1 g
 
 
 evalExpr' ce (Suma []) g = return (TNumeric,nuevoValor)
+evalExpr' ce (Suma [Ran c1 c2]) g = do cellList <- armarList c1 c2 g
+				       evalExpr' ce (Suma cellList) g
 evalExpr' ce (Suma (e:xs)) g= do (t1,v1) <- evalExpr' ce  e g
 		                 (t,v) <- evalExpr' ce (Suma xs) g
 			         if (eqTypes t1 TNumeric && eqTypes t TNumeric) then funcNumeric (\x y -> x + y) v1 v else raise (Err "VALOR")
@@ -134,6 +149,8 @@ evalExpr' ce (Abs e) g = do (t,v) <- evalExpr' ce e g
 
 		            
 evalExpr' ce  (Concat []) g = return (TString,nuevoValor)
+evalExpr' ce  (Concat [Ran c1 c2]) g = do cellList <- armarList c1 c2 g
+					  evalExpr' ce (Concat cellList) g
 evalExpr' ce  (Concat (e:xs)) g = do (t1,v1) <- evalExpr' ce e g
 			             (t,v) <- evalExpr' ce (Concat xs) g
 			             if (eqTypes t1 TString && eqTypes t TString) then funcString (\x y -> x ++ y) v1 v else raise (Err "VALOR")

@@ -23,6 +23,7 @@ data Exp = Str String
        deriving(Show,Eq)
 
 data ExpEval  = Var Celda
+	      | Ran Celda Celda
 	      | EStr String
 	      | EFl Float
 	      | EBo Bool
