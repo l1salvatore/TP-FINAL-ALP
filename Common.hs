@@ -22,7 +22,8 @@ data Exp = Str String
 	 | Unit ()
        deriving(Show,Eq)
 
-data ExpEval  = Var Celda
+data ExpEval  = Star --Estrella, usado para expresiones "cuantificadas" 
+          | Var Celda
 	      | Ran Celda Celda
 	      | EStr String
 	      | EFl Float
@@ -40,11 +41,34 @@ data ExpEval  = Var Celda
 	      | Or ExpEval ExpEval
 	      | Si ExpEval ExpEval ExpEval
 	      | Potencia ExpEval ExpEval
+	      | ContarSi ExpEval ExpEval
 	      | Opuesto ExpEval
 	      | Suma [ExpEval]
 	      | Abs ExpEval
 	      | Concat [ExpEval]
 	deriving(Show,Eq)
+
+sustituirStar :: Celda -> ExpEval -> ExpEval
+sustituirStar c Star = Var c
+sustituirStar c (Mas e1 e2) = Mas (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (Menos e1 e2) = Menos (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (Por e1 e2) = Por (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (Div e1 e2) = Div (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (Ig e1 e2) = Ig (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (Menor e1 e2) = Menor (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (Mayor e1 e2) = Mayor (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (MenorIg e1 e2) = MenorIg (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (MayorIg e1 e2) = MayorIg (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (And e1 e2) = And (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (Or e1 e2) = Or (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (Si e1 e2 e3) = Si (sustituirStar c e1) (sustituirStar c e2) (sustituirStar c e3)
+sustituirStar c (Potencia e1 e2) = Potencia (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (ContarSi e1 e2) = ContarSi (sustituirStar c e1) (sustituirStar c e2)
+sustituirStar c (Opuesto e) = Opuesto (sustituirStar c e)
+sustituirStar c (Suma xs) = Suma (map (\i -> sustituirStar c i) xs)
+sustituirStar c (Abs e) = Abs (sustituirStar c e)
+sustituirStar c (Concat xs) = Concat (map (\i -> sustituirStar c i) xs)
+sustituirStar c exp = exp
 {-
 
 

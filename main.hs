@@ -8,6 +8,7 @@ import Parse
 import ModValor
 import System.Console.Readline
 import System.IO
+import System.IO.Error
 import Data.Char
 
 printValor :: Typ -> Valor -> IO ()
@@ -101,7 +102,7 @@ interprete gra     =(do putStrLn "/////////////////////"
 				     	 		                   pp gra 
 				      		  	                   interprete gra
 		                _              -> ioError (error("sintax error")))
-		     `catch` (\e -> do {print "Parse Error" ; interprete gra })
+		     `catchIOError` (\e -> do {print "Parse Error" ; interprete gra })
 
 main :: IO ()                                                       
 main = do putStr "\ESC[2J"

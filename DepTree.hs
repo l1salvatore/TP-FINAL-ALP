@@ -142,6 +142,7 @@ appList :: [a] -> (a -> IO ()) -> IO ()
 appList [] f = return ()
 appList (x:xs) f = do f x
 		      appList xs f
+		    
 
 -- GET NEIGHTBOURS
 

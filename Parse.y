@@ -39,9 +39,11 @@ import Control.Monad.Except
 	']'	 { TokenCorDer }
 	'^'	 { TokenPot }
 	':'	 { TokenDoblePunto }
+	'!'  { TokenAdm }
 	suma	 { TokenSUMATORIA }
 	si	 { TokenSI }
 	concat   { TokenCONCATENACION }
+	contarsi { TokenCONTARSI }
 	absoluto { TokenABSOLUTO }
 	true 	 { TokenTRUE }
 	false	 { TokenFALSE }
@@ -79,10 +81,11 @@ ExpEvalF : float			 { EFl $1 }
 	 | '(' ExpEval ')'		 { $2 }
 	 | suma '(' ExpList		 { Suma $3 }
 	 | concat '(' ExpList		 { Concat $3 }
+	 | contarsi '(' ExpEval ',' ExpEval ')' {ContarSi $3 $5}
 	 | absoluto '(' ExpEval ')'	 { Abs $3 }
 	 | si '(' ExpEval ',' ExpEval ',' ExpEval ')' { Si $3 $5 $7 }
 	 | '-' ExpEvalF			 { Opuesto $2 }
-	 
+	 | '!'                           { Star }
 ExpList : ExpEval ')'			 { [$1] }
 	| ExpEval ',' ExpList		 { $1:$3 } 
 
@@ -115,9 +118,11 @@ data Token = TokenString String
 	   | TokenMas 
 	   | TokenMenos 
 	   | TokenPor 
+	   | TokenAdm
 	   | TokenDiv 
 	   | TokenParIzq 
-	   | TokenParDer 
+	   | TokenParDer
+	   | TokenCONTARSI 
 	   | TokenCorIzq
 	   | TokenCorDer 
 	   | TokenPot
@@ -177,6 +182,7 @@ lexer2 (c:cs)
       | c == '&' = TokenAnd : lexer2 cs
       | c == '|' = TokenOr : lexer2 cs
       | c == '+' = TokenMas : lexer2 cs
+      | c == '!' = TokenAdm : lexer2 cs
       | c == '-' = TokenMenos : lexer2 cs
       | c == '*' = TokenPor : lexer2 cs
       | c == '^' = TokenPot : lexer2 cs
@@ -204,6 +210,7 @@ lexFunc cs =
       ("suma",rest) -> TokenSUMATORIA : lexer2 rest
       ("si",rest) -> TokenSI : lexer2 rest
       ("concat",rest)  -> TokenCONCATENACION : lexer2 rest
+      ("contarSi",rest) -> TokenCONTARSI : lexer2 rest
       ("abs",rest) -> TokenABSOLUTO : lexer2 rest
       ("true",rest) -> TokenTRUE : lexer2 rest
       ("false",rest) -> TokenFALSE : lexer2 rest
