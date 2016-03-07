@@ -7,18 +7,53 @@ import Control.Monad.State
 import Parse
 import ModValor
 import Data.Char
+import System.IO.Error
 
 
 
-armarList :: Celda -> Celda -> Graph -> IO [ExpEval]
-armarList (c1,n1) (c2,n2) g = if c1 == c2 then if n1 == n2 then do return [Var (c2,n2)] 
-					                   else if n1 > n2 then return [] 
-									   else do explist <- armarList (c1,n1+1) (c2,n2) g
-										   return (Var (c2,n1) : explist)
-					  else if (fromEnum (c1!!0)) > (fromEnum (c2!!0)) then return []
-									   else do explist1 <- armarList (c1,n1) (c1,n2) g
-										   explist2 <- armarList ([chr (fromEnum (c1!!0)+1)],n1) (c2,n2) g
-										   return (explist1 ++ explist2)
+armarLista :: Celda -> Celda -> Graph -> IO [ExpEval]
+armarLista (c1,n1) (c2,n2) g = if c1 == c2 then if n1 == n2 then do return [Var (c2,n2)] 
+					                    else if n1 > n2 then return [] 
+									    else do explist <- armarList (c1,n1+1) (c2,n2) g
+										    return (Var (c2,n1) : explist)
+					   else if (fromEnum (c1!!0)) > (fromEnum (c2!!0)) then return []
+						else do explist1 <- armarLista (c1,n1) (c1,n2) g
+							explist2 <- armarList ([chr (fromEnum (c1!!0)+1)],n1) (c2,n2) g
+							return (explist1 ++ explist2)
+
+
+
+
+
+
+
+
+contarSi :: Celda -> ExpEval -> [ExpEval] -> Graph -> IO (Typ,Valor)
+contarSi ce e1 [] g = return (TNumeric,numeric 0)
+contarSi ce e1 ((Var c):xs) g = do (t1,v1) <- evalExpr' ce (sustituirStar c e1) g
+                                   (t,n) <- contarSi ce e1 xs g
+                                   if eqTypes t1 TBoolean then 
+                                      if err v1 == Ok then 
+                                          if boo v1 then funcUnNumeric (\x -> 1 + x) n 
+                                          else funcUnNumeric (\x -> x) n
+                                      else raise (err v1)                            
+                                   else raise (Err "VALOR")
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
 
 expr :: String -> IO Exp
 expr "" = return (Unit ())
@@ -27,10 +62,10 @@ expr s =  parseExpr (lexer s)
 evalCelda :: Celda -> Graph -> IO ()
 evalCelda c g =  do i <- infocelda c g
 	 	    elimNeightBours g i
-		    newExpr <- expr (strexpr i)
-		    (t,v) <- evalExpr c newExpr g
-		    updateCell c t (strexpr i) v g
-
+		    (do newExpr <- expr (strexpr i)
+		        (t,v) <- evalExpr c newExpr g
+		        updateCell c t (strexpr i) v g)
+		      `catchIOError` (\e -> do {(t,v) <- raise (Err "PARSE ERROR"); updateCell c t (strexpr i) v g})
 
 evalExpr :: Celda -> Exp -> Graph -> IO (Typ,Valor)
 evalExpr ce (Str s) g = return (TString,string s)
@@ -49,9 +84,9 @@ evalExpr' ce (Var c) g =  do i <- infocelda c g
 			     b <- existsRoad ce c g
 			     if b then do ginsertEdge i i' g
 					  raise (Err "CICLO DETECTADO") 
-				  else do e <- expr (strexpr i) 
+				  else do ginsertEdge i i' g 
+					  e <- expr (strexpr i) 
 					  r <- evalExpr c e g
-					  ginsertEdge i i' g 
 					  return r
 
 evalExpr' ce (Ran c1 c2) g = raise (Err "VALOR")
@@ -214,16 +249,7 @@ evalExpr' ce (ContarSi e1 (Var c)) g = evalExpr' ce (Si (sustituirStar c e1) (EF
 evalExpr' ce (ContarSi e1 e2) g = raise (Err "VALOR")
                                               
                                               
-contarSi :: Celda -> ExpEval -> [ExpEval] -> Graph -> IO (Typ,Valor)
-contarSi ce e1 [] g = return (TNumeric,numeric 0)
-contarSi ce e1 ((Var c):xs) g = do (t1,v1) <- evalExpr' ce (sustituirStar c e1) g
-                                   (t,n) <- contarSi ce e1 xs g
-                                   if eqTypes t1 TBoolean then 
-                                      if err v1 == Ok then 
-                                          if boo v1 then funcUnNumeric (\x -> 1 + x) n 
-                                          else funcUnNumeric (\x -> x) n
-                                      else raise (err v1)                            
-                                   else raise (Err "VALOR")
+
 {-			
 eval :: Celda -> Exp -> String -> Graph -> IO ()
 eval c e s g =  do (v,g) <- evalExpr c e g

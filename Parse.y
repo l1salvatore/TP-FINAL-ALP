@@ -157,12 +157,12 @@ lexer1 cs = if cs!!0 /= '-' then
 		if rest'''!!0 == '.' then 
 			if rest'''' == [] then [TokenMenos,TokenFloat (read (num2 ++ num3) / 10^(length num3))] else [TokenString cs] 
 		else [TokenString cs]
-		where (num,rest) = span isDigit cs
-		      (num1,rest') = span isDigit (tail rest)
+		where (num,rest) = span (\x -> isDigit x || isSpace x) cs
+		      (num1,rest') = span (\x -> isDigit x || isSpace x) (tail rest)
 		      cs' = tail cs
 		      (spaces,rest'') = span (\i -> i == ' ') cs'
-		      (num2,rest''') = span isDigit rest''
-		      (num3,rest'''') = span isDigit (tail rest''')
+		      (num2,rest''') = span (\x -> isDigit x || isSpace x) rest''
+		      (num3,rest'''') = span (\x -> isDigit x || isSpace x) (tail rest''')
 
 
 lexer2 :: String -> [Token]

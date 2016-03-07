@@ -18,6 +18,7 @@ nuevoValor = Val { num = 0,
 		 }
 
 
+
 funcString :: (String -> String -> String) -> Valor -> Valor -> IO (Typ,Valor)
 funcString f v1 v2 = if ((err v1) == Ok && (err v2) == Ok) then return (TString,string (f (str v1) (str v2))) else
 		     if (err v1 /= Ok) then raise (err v1) else raise (err v2)

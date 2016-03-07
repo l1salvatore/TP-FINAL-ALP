@@ -10,6 +10,8 @@ import System.Console.Readline
 import System.IO
 import System.IO.Error
 import Data.Char
+import System.Environment 
+import ParseFiles
 
 printValor :: Typ -> Valor -> IO ()
 printValor TNumeric v = print (num v)
@@ -34,8 +36,11 @@ pp'  i     = do putStr "celda: "
 		printValor (typ i) (valor i)
                 putStrLn "-------------------"
    
-printCell :: Celda -> IO String
-printCell (c,n) = return ("Seleccione una celda (con las flechas)>  "++c++show n)
+printInputCell :: Bool -> Celda -> IO String
+printInputCell True (c,n) = return ("Seleccione una celda (con las flechas)>  "++c++show n)
+printInputCell False (c,n) = return (c++show n)
+
+
 
 data Directions = U | D | L | R | None
 	deriving (Eq)
@@ -57,13 +62,13 @@ dir   = do hSetEcho stdin False
 						else dir--do putStr "PARADO"
 				                     --   return ()         
                            else if x1 == '\n' then return None
-			   else if x1 == 'q' || x1 == 'Q' then error "Terminado" else dir
+			   else if x1 == 'q' || x1 == 'Q' then error "" else dir
 
 
 cambiar :: Celda -> IO Celda
 cambiar c = do putStr "\ESC[2K"
 	       putStr "\ESC[1G"
-	       s <- printCell c
+	       s <- printInputCell True c
 	       putStr s
 	       d <- dir
 	       if d /= None then cambiar (cambiar' c d) else return c
@@ -95,19 +100,76 @@ interprete gra     =(do putStrLn "/////////////////////"
 		                                     y <- readline "Expresion> "
 		                                     case y of
 		                                           Nothing -> return ()
-		                                           Just "_exit" -> return ()
+		                                           Just "_exit" -> terminar
 		                      			   Just str1 -> do updateCell c TUnit str1 nuevoValor gra --let e = parseExpr (lexer str1) in
 		 		      			                   gra <- bfs c gra evalCelda
 				      			                   putStrLn "/////////////////////"
 				     	 		                   pp gra 
 				      		  	                   interprete gra
 		                _              -> ioError (error("sintax error")))
-		     `catchIOError` (\e -> do {print "Parse Error" ; interprete gra })
+		     
 
-main :: IO ()                                                       
-main = do putStr "\ESC[2J"
-	  g <- newGraph
-	  interprete g 
+
+
+
+readAssign :: Assign -> Graph -> IO ()
+readAssign Empty g = return ()
+readAssign (Let cell exps) g = (do updateCell cell TUnit exps nuevoValor g --let e = parseExpr (lexer str1) in
+		 	           g <- bfs cell g evalCelda
+				   return ()) `catchIOError` (\e -> do { strcell <- printInputCell False cell; main' ("ERROR DE PARSEO EN LA CELDA "++strcell++"\n")})
+readAssign (Cat a1 a2) g = do readAssign a1 g
+			      readAssign a2 g
+
+
+newSheet :: String -> IO ()
+newSheet str = do content <- generateContentNewSheet ("A",1)
+		  writeFile (str++".calc") content
+
+
+generateContentNewSheet :: Celda -> IO String
+generateContentNewSheet (s,n) = if s == "Z" then if n == 99 then do str <- printInputCell False (s,n)
+							            return (str++":            ;")
+						 else do str <- printInputCell False (s,n)
+							 str' <- generateContentNewSheet ("A",n+1)
+							 if n < 10 then return (str++":             ;\n"++str') else return (str++":            ;\n"++str')
+					    else do str <- printInputCell False (s,n)
+						    str' <- generateContentNewSheet ([chr ((fromEnum (s!!0)) +1)],n)
+						    if n < 10 then return (str++":             ;"++str') else return (str++":            ;"++str')
+
+terminar :: IO ()
+terminar = (ioError (error "") ) `catchIOError` (\e -> do {putStrLn "---Terminado---";return ()})
+
+main :: IO ()
+main = main' ""
+
+main' :: String -> IO ()                                                       
+main' e = do putStr "\ESC[2J"
+	     hSetEcho stdin False
+	     putStr e
+	     putStrLn "Ingrese modo de uso:"
+	     putStrLn "1- Interprete"
+	     putStrLn "2- Interprete a partir de archivo"
+	     putStrLn "3- Salir"
+	     opc <- getChar
+	     case opc of
+		  '1'      ->   do g <- newGraph
+	  		           interprete g
+	          '2'      ->   do hSetEcho stdin True
+				   s <- readline "Archivo> "
+				   case s of
+					     Nothing -> main' "ARCHIVO NO PASADO, INTENTE DE VUELTA\n"
+					     Just str -> let n = length str - 5 in
+							      case (take n str,drop n str) of
+								   (str',".calc") -> (do g <- newGraph
+										         s <- readFile str
+										         a <- parseFile s
+										         readAssign a g
+										         pp g
+										         interprete g) `catchIOError` (\e -> main' "ARCHIVO NO EXISTENTE\n")
+						           	   (str',otherstr) -> main' "ARCHIVO NO VALIDO, INTENTE DE VUELTA\n"
+		  '3'      ->  terminar
+		  n       ->  main' "OPCION NO VALIDA, INTENTE DE VUELTA\n"
+			 
                             
 
                          

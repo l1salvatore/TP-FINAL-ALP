@@ -9,8 +9,7 @@ data Error = Ok | Err String
 data Typ = TNumeric | TString | TBoolean | TUnit
 	deriving (Eq,Show)
 
-eqTypes :: Typ -> Typ -> Bool
-eqTypes t1 t2 = t1 == t2 || t1 == TUnit
+
 
 type Celda = (String, Int)
 
@@ -23,7 +22,7 @@ data Exp = Str String
        deriving(Show,Eq)
 
 data ExpEval  = Star --Estrella, usado para expresiones "cuantificadas" 
-          | Var Celda
+              | Var Celda
 	      | Ran Celda Celda
 	      | EStr String
 	      | EFl Float
@@ -47,6 +46,12 @@ data ExpEval  = Star --Estrella, usado para expresiones "cuantificadas"
 	      | Abs ExpEval
 	      | Concat [ExpEval]
 	deriving(Show,Eq)
+
+
+
+eqTypes :: Typ -> Typ -> Bool
+eqTypes t1 t2 = t1 == t2 || t1 == TUnit
+
 
 sustituirStar :: Celda -> ExpEval -> ExpEval
 sustituirStar c Star = Var c
