@@ -1,10 +1,12 @@
 module ModValor where
 
 import Common
+import Data.Time
 
 data Valor = Val { 
 		   num :: Float,
 		   str :: String,
+		   dat :: Day,
 		   boo :: Bool,
 		   err :: Error
 		 }
@@ -13,6 +15,7 @@ data Valor = Val {
 nuevoValor :: Valor
 nuevoValor = Val { num = 0,
 		   str = "",
+		   dat = fromGregorian 0 0 0,
 		   boo = True,
 		   err = Ok
 		 }
@@ -29,6 +32,7 @@ funcUnString f v = if (err v == Ok) then return (TString,string (f (str v))) els
 string :: String -> Valor
 string s = Val {    num = 0,
 		    str = s,
+		    dat = fromGregorian 0 0 0,
 		    boo = True,
 		    err = Ok
 		     }
@@ -43,6 +47,7 @@ funcUnNumeric f v = if (err v == Ok) then return (TNumeric,numeric (f (num v))) 
 numeric :: Float -> Valor
 numeric n = Val { num = n,
 		  str = "",
+	          dat = fromGregorian 0 0 0,
 		  boo = True,
 		  err = Ok
 		     }
@@ -57,12 +62,30 @@ funcUnBoolean f v = if (err v == Ok) then return (TBoolean,boolean (f (boo v))) 
 boolean :: Bool -> Valor
 boolean b = Val { num = 0,
 		  str = "",
+		  dat = fromGregorian 0 0 0,
 		  boo = b,
 		  err = Ok
 		}
 
+
+
+funcDate :: (Day -> Day -> Day) -> Valor -> Valor -> IO (Typ,Valor)
+funcDate f v1 v2 = if (err v1 == Ok && err v2 == Ok) then return (TDate,date (f (dat v1) (dat v2))) else 
+		   if (err v1 /= Ok) then raise (err v1) else raise (err v2)
+
+funcUnDate :: (Day -> Day) -> Valor -> IO (Typ,Valor)
+funcUnDate f v = if (err v == Ok) then return (TDate,date (f (dat v))) else raise (err v)
+
+date :: Day -> Valor
+date d = Val { num = 0,
+	       str = "",
+	       dat = d,
+	       boo = True,
+	       err = Ok
+		}
+
 raise :: Error -> IO (Typ,Valor)
-raise e = return (TUnit, Val { num = 0, str = "", boo = True, err = e})
+raise e = return (TUnit, Val { num = 0, str = "", dat = fromGregorian 0 0 0, boo = True, err = e})
 
 
 {-

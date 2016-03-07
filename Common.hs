@@ -1,12 +1,12 @@
 
 module Common where
 
-
+import Data.Time
 -- TIPOS DE DATOS
 data Error = Ok | Err String
 	deriving (Show,Eq)
 	
-data Typ = TNumeric | TString | TBoolean | TUnit
+data Typ = TNumeric | TString | TDate | TBoolean | TUnit
 	deriving (Eq,Show)
 
 
@@ -17,6 +17,7 @@ type Celda = (String, Int)
 data Exp = Str String
 	 | Fl Float
 	 | Bo Bool
+	 | Date Day
 	 | Eval ExpEval
 	 | Unit ()
        deriving(Show,Eq)
@@ -27,23 +28,33 @@ data ExpEval  = Star --Estrella, usado para expresiones "cuantificadas"
 	      | EStr String
 	      | EFl Float
 	      | EBo Bool
+	      | EDate Day
+	      -- Funciones de Fechas
+	      | Hoy
+	      | DiasEntre ExpEval ExpEval 
+	      -- Operaciones Matematicas
 	      | Mas ExpEval ExpEval
 	      | Menos ExpEval ExpEval
 	      | Por ExpEval ExpEval
-	      | Div ExpEval ExpEval 
+	      | Div ExpEval ExpEval
+	      -- Comparaciones Matematicas 
 	      | Ig ExpEval ExpEval
 	      | Menor ExpEval ExpEval
 	      | Mayor ExpEval ExpEval
 	      | MenorIg ExpEval ExpEval
 	      | MayorIg ExpEval ExpEval
+	      -- Operaciones Logicas
 	      | And ExpEval ExpEval
 	      | Or ExpEval ExpEval
+	      -- Sentencias
 	      | Si ExpEval ExpEval ExpEval
-	      | Potencia ExpEval ExpEval
 	      | ContarSi ExpEval ExpEval
+	      -- Funciones Matematicas
+	      | Potencia ExpEval ExpEval
 	      | Opuesto ExpEval
 	      | Suma [ExpEval]
 	      | Abs ExpEval
+	      -- Funciones Strings
 	      | Concat [ExpEval]
 	deriving(Show,Eq)
 

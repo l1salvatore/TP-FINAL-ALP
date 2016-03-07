@@ -17,6 +17,7 @@ printValor :: Typ -> Valor -> IO ()
 printValor TNumeric v = print (num v)
 printValor TString v = print (str v)
 printValor TBoolean v = print (boo v)
+printValor TDate v = print (dat v)
 printValor TUnit v = case (err v) of
 			Ok -> putStrLn ""
 			Err s -> print (Err s)
