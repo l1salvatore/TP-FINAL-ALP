@@ -95,7 +95,7 @@ ExpEvalF : float			 			{ EFl $1 }
 	 | '!'                           			{ Star }
 	 | date							{ EDate $1 }
 	 | difdias '(' ExpEval ',' ExpEval ')'			{ DiasEntre $3 $5 }
-	 | easterday '(' ExpEval ')'                            { DiaPascua $3 }						
+	 | easterday '(' ExpEval ')'                            { DiaPascua $2 }						
 
 
 ExpList : ExpEval ')'			 			{ [$1] }

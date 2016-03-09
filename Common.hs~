@@ -32,7 +32,7 @@ data ExpEval  = Star --Estrella, usado para expresiones "cuantificadas"
 	      -- Funciones de Fechas
 	      | Hoy
 	      | DiasEntre ExpEval ExpEval 
-	      | DiaPascua ExpEval
+	      | DiaNavidad ExpEval
 	      -- Operaciones Matematicas
 	      | Mas ExpEval ExpEval
 	      | Menos ExpEval ExpEval
