@@ -279,7 +279,7 @@ evalExpr' ce (DiaPascua e1) g = do (t,v) <- evalExpr' ce e1 g
 				   		
 				  	funcUnDate (\_ -> let year = floor (num v)
 				   			      a = mod year 19
-				   			      b = div a 100
+				   			      b = div year 100
 				   			      c = mod year 100
 				   			      d = div b 4
 				   			      e = mod b 4
@@ -292,7 +292,7 @@ evalExpr' ce (DiaPascua e1) g = do (t,v) <- evalExpr' ce e1 g
 				   			      m = div (a + 11*h + 22*l) 451
 				   			      n = h + l - 7*m+114
 				   			      month = div n 31
-				   			      day = if d + e < 10 then 1 + (mod n 31) else 1 + (n-(month*31))
+				   			      day = 1 + (n - (month*31))
 				   		          in fromGregorian (fromIntegral year) month day) nuevoValor
 				   		    
 				   else raise (Err "Valor")
