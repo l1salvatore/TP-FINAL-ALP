@@ -269,7 +269,7 @@ evalExpr' ce Hoy g = do t <- getCurrentTime
 evalExpr' ce (DiasEntre e1 e2) g = do (t1,v1) <- evalExpr' ce e1 g
 				      (t2,v2) <- evalExpr' ce e2 g
 				      if (eqTypes t1 TDate && eqTypes t2 TDate)
-					 then if (err v1 == Ok ) then if (err v2 == Ok) then diasEntre v1 v2
+					 then if (err v1 == Ok ) then if (err v2 == Ok) then diasEntre (dat v1) (dat v2)
 										        else raise (err v2)
 							         else raise (err v1)
 					 else raise (Err "VALOR")
@@ -301,11 +301,9 @@ evalExpr' ce (DiaPascua e1) g = do (t,v) <- evalExpr' ce e1 g
 lengthYear :: Integer -> Int
 lengthYear y = if isLeapYear y then 366 else 365 
 
-diasEntre :: Valor -> Valor -> IO (Typ,Valor)
-diasEntre v1 v2 = let x = dat v1
-		      y = dat v2
-		      (y1,m1,d1) = toGregorian x
-		      (y2,m2,d2) = toGregorian y in
+diasEntre :: Day -> Day -> IO (Typ,Valor)
+diasEntre x y = let (y1,m1,d1) = toGregorian x
+		    (y2,m2,d2) = toGregorian y in
 		               if y1 == y2 then if m1 == m2 then funcUnNumeric (\_ -> fromIntegral (d2 - d1)) nuevoValor
 							    else funcUnNumeric (\_ -> fromIntegral(
 										      d2 + -- dias anteriores del dia en el mes m2
