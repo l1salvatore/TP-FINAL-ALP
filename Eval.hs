@@ -3,14 +3,13 @@ module Eval where
 import Common
 import DepTree
 import qualified Data.Set as S
-import Control.Monad.State
 import Parse
 import ModValor
 import Data.Char
 import Data.Time
 import System.IO.Error
 
-
+ {-
 
 armarLista :: Celda -> Celda -> Graph -> IO [ExpEval]
 armarLista (c1,n1) (c2,n2) g = if c1 == c2 then if n1 == n2 then do return [Var (c2,n2)] 
@@ -24,9 +23,9 @@ armarLista (c1,n1) (c2,n2) g = if c1 == c2 then if n1 == n2 then do return [Var 
 
 
 
+-}
 
-
-
+{-
 
 
 contarSi :: Celda -> ExpEval -> [ExpEval] -> Graph -> IO (Typ,Valor)
@@ -41,7 +40,7 @@ contarSi ce e1 ((Var c):xs) g = do (t1,v1) <- evalExpr' ce (sustituirStar c e1) 
                                    else raise (Err "VALOR")
 
 
-
+-}
 
 
 
@@ -75,11 +74,11 @@ evalCelda c g =  do i <- infocelda c g
 
 
 evalExpr :: Celda -> Exp -> Graph -> IO (Typ,Valor)
-evalExpr ce (Str s) g = return (TString,string s)
-evalExpr ce (Fl f) g = return (TNumeric,numeric f)
-evalExpr ce (Bo b) g = return (TBoolean,boolean b)
-evalExpr ce (Date d) g = return (TDate,date d)
-evalExpr ce (Unit ()) g = return (TUnit, nuevoValor)
+evalExpr ce (Str s) g = returnStr s
+evalExpr ce (Fl f) g = returnNum f
+evalExpr ce (Bo b) g = returnBool b
+evalExpr ce (Date d) g = returnDay d
+evalExpr ce (Unit ()) g = newVal
 evalExpr ce (Eval e) g = evalExpr' ce e g
 
 
@@ -99,14 +98,14 @@ evalExpr' ce (Var c) g =  do i <- infocelda c g
 -----------------------------------------------
 evalExpr' ce (Ran c1 c2) g = raise (Err "VALOR")
 -----------------------------------------------			     
-evalExpr' ce (EStr s) g = return (TString,string s)
+evalExpr' ce (EStr s) g = returnStr s
 
 -----------------------------------------------
-evalExpr' ce (EFl f) g = return (TNumeric,numeric f)
+evalExpr' ce (EFl f) g = returnNum f
 -----------------------------------------------
-evalExpr' ce (EBo b) g = return (TBoolean,boolean b)
+evalExpr' ce (EBo b) g = returnBool b
 -----------------------------------------------
-evalExpr' ce (EDate d) g = return (TDate,date d)
+evalExpr' ce (EDate d) g = returnDay d
 -----------------------------------------------
 evalExpr' ce (Mas e1 e2) g = do (t1,v1) <- evalExpr' ce e1 g
 			        (t2,v2) <- evalExpr' ce e2 g
@@ -319,63 +318,9 @@ diasEntre x y = let (y1,m1,d1) = toGregorian x
 								     )) nuevoValor
 
                                               
-                                              
-
-{-			
-eval :: Celda -> Exp -> String -> Graph -> IO ()
-eval c e s g =  do (v,g) <- evalExpr c e g
-		   updateCell c e s v g
-
-
-evalExpr :: Celda -> Exp -> Graph -> IO ((Float,String),Graph)
-evalExpr ce (Str s) g = return ((0,s),g)
-evalExpr ce (Fl f) g = return ((f,""),g)
-evalExpr ce (Unit ()) g = return ((0,""),g)
-evalExpr ce (Eval e) g = evalExpr' ce e g
-
-
-
-evalExpr' :: Celda -> ExpEval -> Graph -> IO ((Float,String),Graph)
-evalExpr' ce (Var c) g =  do e <- findExp c g
-			     (r,g) <- evalExpr c e g
-			     i <- infocelda c g
-			     i' <- infocelda ce g 
-			     ginsertEdge i i' g
-			     return (r,g)
-evalExpr' ce (EStr s) g = return ((0,s),g)
-evalExpr' ce (EFl f) g = return ((f,""),g)
-evalExpr' ce (Mas e1 e2) g = do ((f1,s1),g) <- evalExpr' ce e1 g
-			        ((f2,s2),g) <- evalExpr' ce  e2 g
-			        return ((f1+f2,""),g)
-evalExpr' ce (Menos e1 e2) g = do ((f1,s1),g) <- evalExpr' ce e1 g
-		 	          ((f2,s2),g) <- evalExpr' ce e2 g
-			          return ((f1-f2,""),g)
-evalExpr' ce (Por e1 e2) g = do ((f1,s1),g) <- evalExpr' ce  e1 g
-			        ((f2,s2),g) <- evalExpr' ce e2 g
-			        return ((f1*f2,""),g)
-evalExpr' ce (Div e1 e2) g =  do ((f1,s1),g) <- evalExpr' ce e1 g
-			         ((f2,s2),g) <- evalExpr' ce e2 g
-			         if f2 == 0 then error ("div cero!") else return ((f1 / f2,""),g)
-evalExpr' ce (Ig e1 e2) g =do (a,g) <- evalExpr' ce  e1 g
-			      (b,g) <- evalExpr' ce e2 g
-			      if a == b then return ((1,""),g) else return ((0,""),g)
-evalExpr' ce (Suma []) g = return ((0,""),g)
-evalExpr' ce (Suma (e:xs)) g= do ((f1,s1),g) <- evalExpr' ce  e g
-		                 ((f,s),g) <- evalExpr' ce (Suma xs) g
-			         return ((f1+f,""),g)
-evalExpr' ce (Abs e) g = do ((f,s),g) <- evalExpr' ce e g
-		            return ((abs(f),""),g)
-evalExpr' ce  (Concat []) g = return ((0,""),g)
-evalExpr' ce  (Concat (e:xs)) g = do ((f1,s1),g) <- evalExpr' ce e g
-			             ((f,s),g) <- evalExpr' ce (Concat xs) g
-			             return ((0,s1 ++ s),g)
-evalExpr' ce (Opuesto e) g = do ((f,s),g) <- evalExpr' ce e g
-			        return ((-1*f,""),g)
--}
-
-
  
-
+ 
+-}
 
 
 
