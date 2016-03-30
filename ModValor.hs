@@ -26,7 +26,7 @@ class (Monad m) => (MonadVal m) where
 	returnStr :: String -> m (Typ,Valor)
 	returnDay :: Day -> m (Typ,Valor)
 	newVal :: m (Typ,Valor)
-	raise :: Error -> m (Typ,Valor)
+	raiseErr :: String -> m (Typ,Valor)
 	getBool :: (Typ,Valor) -> m Bool
 	getNum :: (Typ,Valor) -> m Float
 	getStr :: (Typ,Valor) -> m String
@@ -70,35 +70,35 @@ instance MonadVal IO where
                              err = Ok
                            }
              in return (TUnit,val)
-    raise e = let val = Val { num = 0,
-                               str = "",
-                               dat = fromGregorian 0 0 0,
-                               boo = True,
-                               err = e
+    raiseErr s = let val = Val { num = 0,
+                                 str = "",
+                                 dat = fromGregorian 0 0 0,
+                                 boo = True,
+                                 err = Err s
                              }
                in return (TUnit, val)
     getBool (t,v) = (if eqTypes t TBoolean then
                         if err v == Ok then
                              return (boo v)
                         else case (err v) of 
-                                 Err s -> ioError (error s)
-                     else ioError (error "VALOR"))
+                                 Err s -> ioError (userError s)
+                     else ioError (userError "VALOR"))
     getNum (t,v) = (if eqTypes t TNumeric then
                         if err v == Ok then
                              return (num v)
                         else case (err v) of 
-                                 Err s -> ioError (error s)
-                     else ioError (error "VALOR"))
+                                 Err s -> ioError (userError s)
+                     else ioError (userError "VALOR"))
     getStr (t,v) = (if eqTypes t TString then
                         if err v == Ok then
                              return (str v)
                         else case (err v) of 
-                                 Err s -> ioError (error s)
-                     else ioError (error "VALOR"))
+                                 Err s -> ioError (userError s)
+                     else ioError (userError "VALOR"))
     getDay (t,v) = (if eqTypes t TDate then
                         if err v == Ok then
                              return (dat v)
                         else case (err v) of 
-                                 Err s -> ioError (error s)
-                     else ioError (error "VALOR"))
+                                 Err s -> ioError (userError s)
+                     else ioError (userError "VALOR"))
 		  

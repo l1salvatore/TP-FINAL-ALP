@@ -13,6 +13,8 @@ import Data.Char
 import System.Environment 
 import ParseFiles
 
+
+-- Preety printer (Auxiliar)
 printValor :: Typ -> Valor -> IO ()
 printValor TNumeric v = print (num v)
 printValor TString v = print (str v)
@@ -37,16 +39,17 @@ pp'  i     = do putStr "celda: "
 		printValor (typ i) (valor i)
                 putStrLn "-------------------"
    
+-- Printer del selector de celdas
 printInputCell :: Bool -> Celda -> IO String
 printInputCell True (c,n) = return ("Seleccione una celda (con las flechas)>  "++c++show n)
 printInputCell False (c,n) = return (c++show n)
 
 
-
+-- Direcciones
 data Directions = U | D | L | R | None
 	deriving (Eq)
 
-
+-- Obtiene del teclado una dirección dada una flecha
 dir :: IO Directions
 dir   = do hSetEcho stdin False
 	   x1 <- getChar
@@ -63,9 +66,9 @@ dir   = do hSetEcho stdin False
 						else dir--do putStr "PARADO"
 				                     --   return ()         
                            else if x1 == '\n' then return None
-			   else if x1 == 'q' || x1 == 'Q' then error "" else dir
+			   else if x1 == 'q' || x1 == 'Q' then ioError (userError "---Terminado---") else dir
 
-
+-- Dada una celda inicial, cambia hacia las celdas vecinas
 cambiar :: Celda -> IO Celda
 cambiar c = do putStr "\ESC[2K"
 	       putStr "\ESC[1G"
@@ -88,11 +91,9 @@ cambiar' (c,n) None = (c,n)
 
 
 
-
+-- El interprete con un grafo como estado
 interprete :: Graph -> IO ()
 interprete gra     =(do putStrLn "/////////////////////"
-			--x <- readline "Celda> "
-			--putStrLn "Seleccione una celda (con las flechas)>  "
 			c <- cambiar ("A",1)
 			hSetEcho stdin True
                         e <- (parseExpr ([TokenEval] ++ [TokenCelda c]))
@@ -101,7 +102,7 @@ interprete gra     =(do putStrLn "/////////////////////"
 		                                     y <- readline "Expresion> "
 		                                     case y of
 		                                           Nothing -> return ()
-		                                           Just "_exit" -> terminar
+		                                           Just "_exit" -> ioError (userError "---Terminado---") 
 		                      			   Just str1 -> do updateCell c TUnit str1 nuevoValor gra --let e = parseExpr (lexer str1) in
 		 		      			                   gra <- bfs c gra evalCelda
 				      			                   putStrLn "/////////////////////"
@@ -122,29 +123,12 @@ readAssign (Cat a1 a2) g = do readAssign a1 g
 			      readAssign a2 g
 
 
-newSheet :: String -> IO ()
-newSheet str = do content <- generateContentNewSheet ("A",1)
-		  writeFile (str++".calc") content
-
-
-generateContentNewSheet :: Celda -> IO String
-generateContentNewSheet (s,n) = if s == "Z" then if n == 99 then do str <- printInputCell False (s,n)
-							            return (str++":            ;")
-						 else do str <- printInputCell False (s,n)
-							 str' <- generateContentNewSheet ("A",n+1)
-							 if n < 10 then return (str++":             ;\n"++str') else return (str++":            ;\n"++str')
-					    else do str <- printInputCell False (s,n)
-						    str' <- generateContentNewSheet ([chr ((fromEnum (s!!0)) +1)],n)
-						    if n < 10 then return (str++":             ;"++str') else return (str++":            ;"++str')
-
-terminar :: IO ()
-terminar = (ioError (error "") ) `catchIOError` (\e -> do {putStrLn "---Terminado---";return ()})
 
 main :: IO ()
 main = main' ""
 
 main' :: String -> IO ()                                                       
-main' e = do putStr "\ESC[2J"
+main' e =(do putStr "\ESC[2J"
 	     hSetEcho stdin False
 	     putStr e
 	     putStrLn "Ingrese modo de uso:"
@@ -166,12 +150,14 @@ main' e = do putStr "\ESC[2J"
 										         a <- parseFile s
 										         readAssign a g
 										         pp g
-										         interprete g) `catchIOError` (\e -> main' "ARCHIVO NO EXISTENTE\n")
+										         interprete g)
 						           	   (str',otherstr) -> main' "ARCHIVO NO VALIDO, INTENTE DE VUELTA\n"
-		  '3'      ->  terminar
-		  n       ->  main' "OPCION NO VALIDA, INTENTE DE VUELTA\n"
-			 
-                            
+		  '3'      ->  ioError (userError "---Terminado---") 
+		  n       ->  main' "OPCION NO VALIDA, INTENTE DE VUELTA\n")
+		`catchIOError` (\e -> case (ioeGetErrorString e) of
+				  	"---Terminado---" -> do putStrLn "\n---Terminado---"
+			 					return ()
+                            		"does not exist"  -> main' "ARCHIVO NO EXISTENTE\n") 
 
                          
                         

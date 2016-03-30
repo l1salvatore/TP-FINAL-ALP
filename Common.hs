@@ -65,6 +65,7 @@ eqTypes :: Typ -> Typ -> Bool
 eqTypes t1 t2 = t1 == t2 || t1 == TUnit
 
 
+
 sustituirStar :: Celda -> ExpEval -> ExpEval
 sustituirStar c Star = Var c
 sustituirStar c (Mas e1 e2) = Mas (sustituirStar c e1) (sustituirStar c e2)
@@ -86,46 +87,6 @@ sustituirStar c (Suma xs) = Suma (map (\i -> sustituirStar c i) xs)
 sustituirStar c (Abs e) = Abs (sustituirStar c e)
 sustituirStar c (Concat xs) = Concat (map (\i -> sustituirStar c i) xs)
 sustituirStar c exp = exp
-{-
-
-
-FloatExp 2.3
-StringExp "hola mundo"
-Var ("A",2)
-Suma (FloatExp 2.0) (FloatExp 3.5)
-
-
-Gramatica
-Exp -> Float
-       String
-       Celda
-       Exp + Exp
-       Exp - Exp
-       Exp * Exp
-       Exp / Exp
-       SUM (Exp;Exp;Exp;Exp...)
-       ABS (EXP)
-       CONCAT(Exp;Exp;Exp;Exp...)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--}
-
 
 
 	
