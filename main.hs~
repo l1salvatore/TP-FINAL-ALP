@@ -117,7 +117,7 @@ interprete gra     =(do putStrLn "/////////////////////"
 readAssign :: Assign -> Graph -> IO ()
 readAssign Empty g = return ()
 readAssign (Let cell exps) g = (do updateCell cell TUnit exps nuevoValor g --let e = parseExpr (lexer str1) in
-		 	           g <- bfs cell g eval
+		 	           g <- bfs cell g evalCelda
 				   return ()) `catchIOError` (\e -> do { strcell <- printCellSelector False cell; main' ("ERROR DE PARSEO EN LA CELDA "++strcell++"\n")})
 readAssign (Cat a1 a2) g = do readAssign a1 g
 			      readAssign a2 g

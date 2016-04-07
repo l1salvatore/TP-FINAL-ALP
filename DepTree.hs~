@@ -129,7 +129,7 @@ gremoveEdge v v' g = do maybeset1 <- HT.lookup g v
 						 return ()
 
 
--- Funciones APP que aplican una funcion y no devuelvn nada
+-- APP
 app :: Graph -> (InfoCelda-> IO ()) -> IO ()
 app g f = do xs <- HT.toList g
 	     app' (map (\(a,b) -> a) xs) f

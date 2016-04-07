@@ -7,10 +7,20 @@ data Error = Ok | Err String
 	deriving (Show,Eq)
 	
 data Typ = TNumeric | TString | TDate | TBoolean | TUnit
-	deriving (Eq,Show)
+	deriving (Show)
 
 
-
+instance Eq Typ where
+	TNumeric == TNumeric    = True
+	TString == TString      = True
+	TDate   == TDate        = True
+	TBoolean == TBoolean    = True
+	TUnit == TUnit          = True
+	x == TUnit		= True
+	TUnit == y		= True
+	x == y			= False
+	
+	
 type Celda = (String, Int)
 
 -- AST
@@ -61,8 +71,6 @@ data ExpEval  = Star --Estrella, usado para expresiones "cuantificadas"
 
 
 
-eqTypes :: Typ -> Typ -> Bool
-eqTypes t1 t2 = t1 == t2 || t1 == TUnit
 
 
 

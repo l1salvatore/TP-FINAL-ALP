@@ -10,24 +10,20 @@ import Data.Time
 import System.IO.Error
 
  
-
-
-
-
-
+ 
 expr :: String -> IO Exp
 expr "" = return (Unit ())
 expr s =  parseExpr (lexer s)
 
 
 
-evalCelda :: Celda -> Graph -> IO ()
-evalCelda c g =  do i <- infocelda c g
-	 	    elimNeightBours g i
-		    (do newExpr <- expr (strexpr i)
-		        (t,v) <- evalExpr c newExpr g
-		        updateCell c t (strexpr i) v g)
-		      `catchIOError` (\e -> do {(t,v) <- raiseErr "PARSE ERROR"; updateCell c t (strexpr i) v g})
+eval :: Celda -> Graph -> IO ()
+eval c g =  do i <- infocelda c g
+	       elimNeightBours g i
+	       (do newExpr <- expr (strexpr i)
+	           (t,v) <- evalExpr c newExpr g
+	           updateCell c t (strexpr i) v g)
+	          `catchIOError` (\e -> do {(t,v) <- raiseErr "PARSE ERROR"; updateCell c t (strexpr i) v g})
 
 
 
@@ -174,7 +170,7 @@ evalExpr' ce  (Concat []) g = returnStr ""
 evalExpr' ce  (Concat [Ran c1 c2]) g = do cellList <- armarLista c1 c2 g
 					  evalExpr' ce (Concat cellList) g
 evalExpr' ce  (Concat (e:xs)) g = do v1 <- evalExpr' ce  e g
-		                     v <- evalExpr' ce (Suma xs) g
+		                     v <- evalExpr' ce (Concat xs) g
 			             s1 <- getStr v1
 				     s <- getStr v
 			             returnStr (s1++s)
