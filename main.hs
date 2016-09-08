@@ -100,43 +100,59 @@ readAssign (Cat a1 a2) g = do readAssign a1 g
 
 
 
-main :: IO ()
-main = main' ""
 
-main' :: String -> IO ()                                                       
-main' e =(do putStr "\ESC[2J"
-	     hSetEcho stdin False
-	     putStr e
-	     putStrLn "Ingrese modo de uso:"
-	     putStrLn "1- Interprete"
-	     putStrLn "2- Interprete a partir de archivo"
-	     putStrLn "3- Salir"
-	     opc <- getChar
-	     case opc of
-		  '1'      ->   do g <- nuevoGrafo
-	  		           interprete g
-	          '2'      ->   do hSetEcho stdin True
-				   s <- readline "Archivo> "
-				   case s of
-					     Nothing -> main' "ARCHIVO NO PASADO, INTENTE DE VUELTA\n"
-					     Just str -> let n = length str - 5 in
+mostrarMenu :: String -> IO ()
+mostrarMenu e =do putStr "\ESC[2J"
+	          hSetEcho stdin False
+	          putStr e
+	          putStrLn "Ingrese modo de uso:"
+	          putStrLn "1- Interprete"
+	          putStrLn "2- Interprete a partir de archivo"
+	          putStrLn "3- Salir"
+	          
+
+getOp :: IO Char
+getOp = do c <- getChar
+	   return c
+
+
+procesarOpc :: Char -> IO Grafo
+procesarOpc op = case op of
+		    '1'      ->   do g <- nuevoGrafo
+	  		             return g
+	            '2'      ->   do hSetEcho stdin True
+				     s <- readline "Archivo> "
+				     case s of
+					 Nothing -> ioError (userError "file not passed")
+					 Just str -> let n = length str - 5 in
 							      case (take n str,drop n str) of
 								   (str',".calc") -> (do g <- nuevoGrafo
 										         s <- readFile str
 										         a <- parseFile s
 										         readAssign a g
 										         pp g
-										         interprete g)
-						           	   (str',otherstr) -> main' "ARCHIVO NO VALIDO, INTENTE DE VUELTA\n"
-		  '3'      ->  ioError (userError "---Terminado---") 
-		  n       ->  main' "OPCION NO VALIDA, INTENTE DE VUELTA\n")
-		`catchIOError` (\e -> case (ioeGetErrorString e) of
+										         return g)
+						           	   (str',otherstr) -> ioError (userError "not valid file")
+		    '3'      ->  ioError (userError "---Terminado---") 
+		    n        ->  ioError (userError "not valid option")
+		   
+
+
+main' :: String -> IO ()
+main' s = (do mostrarMenu s
+	      op <- getOp
+              g <- procesarOpc op
+	      interprete g)
+             `catchIOError` (\e -> case (ioeGetErrorString e) of
 				  	"---Terminado---" -> do putStrLn "\n---Terminado---"
 			 					return ()
-                            		"does not exist"  -> main' "ARCHIVO NO EXISTENTE\n") 
-
-                         
-                        
+                            		"does not exist"  -> main' "ARCHIVO NO EXISTENTE\n"
+					"not valid option" -> main' "OPCION NO VALIDA, INTENTE DE VUELTA\n"
+					"not valid file" -> main' "ARCHIVO NO VALIDO, INTENTE DE VUELTA\n"
+					"file not passed" -> main' "ARCHIVO NO PASADO, INTENTE DE VUELTA\n")
+					   
+main :: IO ()
+main = main' ""                
                         
 
 
