@@ -13,7 +13,7 @@ data Assign = Empty
 parseCelda :: String -> IO (Celda,String)
 parseCelda cs 
 	| cs!!0 == ' ' = parseCelda (tail cs)
-	| otherwise = if t3 == ("",0) then ioError (error "parseError1") else return (t3 ,rest')
+	| otherwise = if t3 == ("",0) then ioError (userError "parse error1") else return (t3 ,rest')
 		where (columna,rest) = span (\x -> isAlpha x) cs
 		      t1 	  = map (\x -> if (fromEnum x <= fromEnum 'Z' && fromEnum x >= fromEnum 'A') then x else chr (fromEnum x + (fromEnum 'A' - fromEnum 'a'))) columna
 		      (fila,rest') = if rest == [] then ("",[]) else span isDigit rest 
@@ -44,7 +44,7 @@ parseFile''' cell str
 		| otherwise = case span (\x -> x /= ';') str of
 	 		 (exps,rest) -> if exps == "" then do assign <- parseFile (tail rest)	
 							      return (Cat Empty assign)
-						      else if (rest == "") then ioError (error("parse error4"))
+						      else if (rest == "") then ioError (userError "parse error4")
 						           else if (tail rest == "") then return (Let cell exps) 
 								else do assign <- parseFile (tail rest)
 									return (Cat (Let cell exps) assign)

@@ -240,11 +240,16 @@ evalExpr' ce (CantYears e1 e2) g = do v1 <- evalExpr' ce e1 g
 				      d2 <- getDay v2
 				      returnNum (aniosEntre d1 d2)
 
-
-
-
-
-
+------------------------------------------------
+evalExpr' ce (DistrExpN e1 e2 e3) g = do v1 <- evalExpr' ce e1 g
+					 v2 <- evalExpr' ce e2 g 
+					 v3 <- evalExpr' ce e3 g
+					 x <- getNum v1
+					 lambda <- getNum v2
+					 c <- getNum v3
+					 case c of
+					     0 -> returnNum (lambda * ((exp 1)**(-1*lambda*x)))
+					     _ -> returnNum (1 - ((exp 1)**(-1*lambda*x)))
 
 
 

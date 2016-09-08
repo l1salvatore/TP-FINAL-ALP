@@ -20,6 +20,9 @@ printCellSelector :: Bool -> Celda -> IO String
 printCellSelector True (c,n) = return ("Seleccione una celda (con las flechas)>  "++c++show n)
 printCellSelector False (c,n) = return (c++show n)
 
+guardarHaciaArchivo :: Grafo -> String -> IO ()
+guardarHaciaArchivo g s = do writeFile s ""
+			     aplicar g (\info -> appendFile s ((fst (celda info))++show(snd (celda info))++": "++(strexpr info)++";\n")) 
 
 -- Direcciones
 data Directions = U | D | L | R | None
@@ -42,7 +45,8 @@ dir   = do hSetEcho stdin False
 						else dir--do putStr "PARADO"
 				                     --   return ()         
                            else if x1 == '\n' then return None
-			   else if x1 == 'q' || x1 == 'Q' then ioError (userError "---Terminado---") else dir
+			   else if x1 == 'q' || x1 == 'Q' then ioError (userError "---Terminado---") 
+			   else if x1 == 'g' || x1 == 'G' then ioError (userError "---Guardando---") else dir
 
 -- Dada una celda inicial, cambia hacia las celdas vecinas
 cambiar :: Celda -> IO Celda
@@ -79,15 +83,22 @@ interprete gra     =(do putStrLn "/////////////////////"
 		                                     case y of
 		                                           Nothing -> return ()
 		                                           Just "_exit" -> ioError (userError "---Terminado---") 
+							   Just "_save" -> ioError (userError "---Guardando---")
 		                      			   Just str1 -> do actualizarCelda c TUnit str1 nuevoValor gra --let e = parseExpr (lexer str1) in
 		 		      			                   gra <- bfs c gra evaluar
 				      			                   putStrLn "/////////////////////"
 				     	 		                   pp gra 
 				      		  	                   interprete gra
 		                _              -> ioError (error("sintax error")))
-		     
-
-
+		       `catchIOError` (\e -> case (ioeGetErrorString e) of
+						"---Guardando---" -> do putStrLn "\n---Guardando---"
+									hSetEcho stdin True
+								        s <- readline "Nombre Archivo> "
+									case s of
+									      Nothing -> return ()
+									      Just str -> do guardarHaciaArchivo gra (str++".calc")
+								        		     return ()
+						other		  -> ioError (userError other))
 
 
 readAssign :: Assign -> Grafo -> IO ()
@@ -97,6 +108,9 @@ readAssign (Let cell exps) g = (do actualizarCelda cell TUnit exps nuevoValor g 
 				   return ()) `catchIOError` (\e -> do { strcell <- printCellSelector False cell; main' ("ERROR DE PARSEO EN LA CELDA "++strcell++"\n")})
 readAssign (Cat a1 a2) g = do readAssign a1 g
 			      readAssign a2 g
+
+
+
 
 
 
@@ -145,11 +159,14 @@ main' s = (do mostrarMenu s
 	      interprete g)
              `catchIOError` (\e -> case (ioeGetErrorString e) of
 				  	"---Terminado---" -> do putStrLn "\n---Terminado---"
-			 					return ()
+			 					return ()				       
                             		"does not exist"  -> main' "ARCHIVO NO EXISTENTE\n"
 					"not valid option" -> main' "OPCION NO VALIDA, INTENTE DE VUELTA\n"
 					"not valid file" -> main' "ARCHIVO NO VALIDO, INTENTE DE VUELTA\n"
-					"file not passed" -> main' "ARCHIVO NO PASADO, INTENTE DE VUELTA\n")
+					"file not passed" -> main' "ARCHIVO NO PASADO, INTENTE DE VUELTA\n"
+					"parse error1" -> main' "Parseo de error\n"
+					"parse error4" -> main' "Falta un ; (punto y coma)\n"
+					_	       -> error "ERROR\n")
 					   
 main :: IO ()
 main = main' ""                

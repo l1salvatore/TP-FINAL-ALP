@@ -53,6 +53,7 @@ import Control.Monad.Except
 	difdias	 { TokenDIFDAYS }
 	easterday { TokenEASTERDAY }
 	difyears { TokenDIFYEARS }
+	distrexpn { TokenDISTREXPN }
 %%
 
 Exp : string				 			{ Str $1}
@@ -97,7 +98,8 @@ ExpEvalF : float			 			{ EFl $1 }
 	 | date							{ EDate $1 }
 	 | difdias '(' ExpEval ',' ExpEval ')'			{ DiasEntre $3 $5 }
 	 | difyears '(' ExpEval ',' ExpEval ')'			{ CantYears $3 $5 }
-	 | easterday '(' ExpEval ')'                            { DiaPascua $3 }						
+	 | easterday '(' ExpEval ')'                            { DiaPascua $3 }
+	 | distrexpn '(' ExpEval ',' ExpEval ',' ExpEval ')'    { DistrExpN $3 $5 $7 }						
 
 
 ExpList : ExpEval ')'			 			{ [$1] }
@@ -150,6 +152,7 @@ data Token = TokenString String
 	   | TokenFALSE
 	   | TokenEASTERDAY
 	   | TokenDIFYEARS 
+	   | TokenDISTREXPN
 	deriving(Show)
 
 
@@ -259,6 +262,7 @@ lexFunc cs =
       ("diasEntre",rest) -> TokenDIFDAYS : lexerFuncDays rest
       ("diaPascua",rest) -> TokenEASTERDAY : lexer2 rest
       ("aniosEntre",rest) -> TokenDIFYEARS : lexerFuncDays rest
+      ("distribExp",rest) -> TokenDISTREXPN : lexer2 rest
       (otherstr,rest) -> (TokenString otherstr) : lexer2 rest
 
 lexCelda :: Char -> String -> [Token]

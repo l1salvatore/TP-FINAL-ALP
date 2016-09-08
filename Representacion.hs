@@ -68,6 +68,8 @@ data ExpEval  = SimboloLigadura -- usado para expresiones "cuantificadas"
 	      | Abs ExpEval
 	      -- Funciones Strings
 	      | Concat [ExpEval]
+	      -- Funciones Estadisticas
+	      | DistrExpN ExpEval ExpEval ExpEval
 	deriving(Show,Eq)
 
 

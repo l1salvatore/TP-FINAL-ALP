@@ -15,6 +15,9 @@ printValor TUnit v = case (err v) of
 			Err s -> print (Err s)
 
 
+
+
+
 pp :: Grafo -> IO ()
 pp g = do putStrLn "-------------------"
 	  aplicar g (\a -> if (strexpr a) /= "" then pp' a else return ())
@@ -26,4 +29,5 @@ pp g = do putStrLn "-------------------"
 			       putStr "valor: "
 			       printValor (typ infocelda) (valor infocelda)
 			       putStrLn "-------------------"
+
 
